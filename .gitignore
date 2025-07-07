@@ -1,22 +1,28 @@
-# Node
-node_modules/
-dist/
+# Global
+.DS_Store
 .env
-.env.local
-.env.*.local
+.env.*
+node_modules/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-
-# VSCode
-.vscode/
+pnpm-debug.log*
 
 # Build
-/build
-/.next
-/out
+dist/
+build/
+out/
 
-# Sistema
-.DS_Store
+# IDE
+.vscode/
+
+# Ignorar node_modules de subproyectos también por si acaso:
+backend/node_modules/
+frontend_admin/node_modules/
+frontend_public/node_modules/
+
+# Ignorar envs por carpeta
+backend/.env*
+frontend_admin/.env*
+frontend_public/.env*
