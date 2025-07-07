@@ -40,10 +40,11 @@ export default function Sidebar(props: { sidebarOpen?: boolean; setSidebarOpen?:
       />
 
       <aside
-        class={`fixed z-40 top-0 left-0 h-full bg-gray-900 text-white p-4 transition-all duration-300 ease-in-out
+        class={`
+          fixed z-40 top-0 left-0 h-screen bg-gray-900 text-white p-4 w-64
+          transition-all duration-300 ease-in-out
           ${props.sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:static
-          group
+          md:translate-x-0
         `}
         onMouseEnter={() => {
           if (document.body.classList.contains("sidebar-collapsed")) {
@@ -63,6 +64,15 @@ export default function Sidebar(props: { sidebarOpen?: boolean; setSidebarOpen?:
         </button>
 
         <nav class="flex flex-col gap-4">
+          {/* Cerrar sesión */}
+          <button
+            onClick={logout}
+            title="Cerrar sesión"
+            class="flex items-center px-2 py-3 rounded hover:bg-gray-800 transition mt-4 text-red-300 text-left w-full"
+          >
+            <LucideIcons.LogOut size={20} class="sidebar-icon text-red-300" stroke="currentColor" />
+            <span class="sidebar-label ml-2">Cerrar sesión</span>
+          </button>
           {grupos.map((grupo) => (
             <div>
               {grupo && (
@@ -98,16 +108,6 @@ export default function Sidebar(props: { sidebarOpen?: boolean; setSidebarOpen?:
               </div>
             </div>
           ))}
-
-          {/* Cerrar sesión */}
-          <button
-            onClick={logout}
-            title="Cerrar sesión"
-            class="flex items-center px-2 py-3 rounded hover:bg-gray-800 transition mt-4 text-red-300 text-left w-full"
-          >
-            <LucideIcons.LogOut size={20} class="sidebar-icon text-red-300" stroke="currentColor" />
-            <span class="sidebar-label ml-2">Cerrar sesión</span>
-          </button>
         </nav>
       </aside>
     </>

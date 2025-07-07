@@ -24,8 +24,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use(manejarSesionAnonima);
 
-// Tus rutas
-app.use('/api', rutas);
+
 
 // SOLO PARA /api, o lo que vos quieras
 app.use('/api', express.json({ limit: '10mb', type: ['application/json'] }));
@@ -33,4 +32,6 @@ app.use('/api', express.urlencoded({ extended: true, limit: '10mb', type: ['appl
 
 app.use(manejarErrores);
 
+// Tus rutas
+app.use('/api', rutas);
 export default app;

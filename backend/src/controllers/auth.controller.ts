@@ -4,8 +4,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as permisoService from '@/services/permiso.service';
 
-const SECRET = process.env.JWT_SECRET || 'secreto';
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh';
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error("Faltan JWT_SECRET o JWT_REFRESH_SECRET en el entorno");
+}
+
+const SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
 
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;

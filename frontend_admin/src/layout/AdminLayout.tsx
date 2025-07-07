@@ -6,10 +6,10 @@ export default function AdminLayout(props: { children: any }) {
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
 
   return (
-    <div class="min-h-screen flex flex-col md:flex-row">
+    <div class="bg-fondo min-h-screen">
       <Sidebar sidebarOpen={sidebarOpen()} setSidebarOpen={setSidebarOpen} />
-
-      <div class="flex-1 flex flex-col bg-white">
+      <div class="md:ml-64 flex flex-col min-h-screen">
+        {/* Menú mobile */}
         <div class="md:hidden">
           <button
             class="m-4 p-2 bg-gray-800 text-white rounded"
@@ -18,9 +18,7 @@ export default function AdminLayout(props: { children: any }) {
             ☰ Menú
           </button>
         </div>
-
         <Header />
-
         <main class="flex-1 p-6">
           {props.children}
         </main>
