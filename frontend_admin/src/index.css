@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "swiper/css";
+
+/* Tailwind base */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Para Firefox */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Para Chrome, Safari y Edge */
+html::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Asegura que el body pueda scrollear */
+body {
+  overflow-y: auto;
+}
+
+/* Reset básico y tipografía */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Cursor general */
+button,
+a,
+[role="button"],
+input[type="submit"] {
+  @apply cursor-pointer;
+}
+
+/* Sidebar */
+aside {
+  width: 256px;
+  transition: width 200ms ease;
+}
+
+body.sidebar-collapsed aside {
+  width: 80px;
+}
+
+body.sidebar-hover aside {
+  width: 256px !important;
+}
+
+/* Transición suave para los textos */
+aside .sidebar-label {
+  display: inline-block;
+  white-space: nowrap;
+  transition: opacity 200ms ease, transform 200ms ease, width 200ms ease;
+}
+
+body.sidebar-collapsed aside .sidebar-label {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  width: 0;
+}
+
+body.sidebar-hover aside .sidebar-label {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  width: auto;
+}
+
+.sidebar-icon {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+body.sidebar-collapsed aside .sidebar-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
