@@ -1,3 +1,4 @@
+// ✅ store/carrito.ts
 import {
   createContext,
   useContext,
@@ -32,9 +33,11 @@ type CarritoContextType = {
 
 const CarritoContext = createContext<CarritoContextType>();
 
+const [versionCarrito, setVersionCarrito] = createSignal(0);
+
 export function CarritoProvider(props: { children: JSX.Element }) {
   const stored = localStorage.getItem('carrito');
-  const [carrito, setCarrito] = createSignal<ItemCarrito[]>(
+  const [carrito, setCarritoRaw] = createSignal<ItemCarrito[]>(
     stored ? JSON.parse(stored) : []
   );
 
@@ -55,35 +58,47 @@ export function CarritoProvider(props: { children: JSX.Element }) {
   });
 
   const agregarAlCarrito = (item: ItemCarrito) => {
-    setCarrito(prev => {
+    setCarritoRaw(prev => {
       const existente = prev.find(p => p.id === item.id);
-      if (existente) {
-        return prev.map(p =>
-          p.id === item.id
-            ? { ...p, cantidad: p.cantidad + item.cantidad }
-            : p
-        );
-      }
-      return [...prev, item];
+      const actualizado = existente
+        ? prev.map(p =>
+            p.id === item.id
+              ? { ...p, cantidad: p.cantidad + item.cantidad }
+              : p
+          )
+        : [...prev, item];
+      return actualizado;
     });
-    // No se abre más automáticamente
     setPasoCarrito(1);
+    setVersionCarrito(v => v + 1);
   };
 
   const quitarDelCarrito = (id: number) => {
-    setCarrito(prev => prev.filter(p => p.id !== id));
+    setCarritoRaw(prev => {
+      const actualizado = prev.filter(p => p.id !== id);
+      setVersionCarrito(v => v + 1);
+      return actualizado;
+    });
   };
 
-  const vaciarCarrito = () => setCarrito([]);
+  const vaciarCarrito = () => {
+    setCarritoRaw([]);
+    setVersionCarrito(v => v + 1);
+  };
 
   const total = () =>
     carrito().reduce((sum, p) => sum + p.precio * p.cantidad, 0);
+
+  const wrappedSetCarrito = (items: ItemCarrito[]) => {
+    setCarritoRaw(items);
+    setVersionCarrito(v => v + 1);
+  };
 
   return (
     <CarritoContext.Provider
       value={{
         carrito,
-        setCarrito,
+        setCarrito: wrappedSetCarrito,
         agregarAlCarrito,
         quitarDelCarrito,
         vaciarCarrito,
@@ -107,3 +122,5 @@ export const useCarrito = () => {
     throw new Error('useCarrito debe usarse dentro de <CarritoProvider>');
   return ctx;
 };
+
+export { versionCarrito };

@@ -1,4 +1,4 @@
-import { createResource, createSignal, For, Show, createEffect } from "solid-js";
+import { createSignal, createEffect, For, Show } from "solid-js";
 import {
   listarCategoriasAdmin,
   actualizarOrdenCategorias,
@@ -18,27 +18,23 @@ interface Props {
   reload?: number;
 }
 
-export default function TablaCategorias(props: Props & { reload?: number }) {
+export default function TablaCategorias(props: Props) {
   const [categoriasRaw, setCategoriasRaw] = createSignal<{
     categorias: Categoria[];
     totalPages: number;
     totalCount: number;
   } | null>(null);
 
-  createResource(
-    () => props.filtro,
-    async (filtro) => {
-      const res = await listarCategoriasAdmin({ ...filtro, limit: 100 });
-      setCategoriasRaw(res);
-      return res;
-    }
-  );
+  const fetchCategorias = async () => {
+    const res = await listarCategoriasAdmin({ ...props.filtro, limit: 100 });
+    setCategoriasRaw(res);
+  };
 
-  // Refetch al cambiar reload
+  // 🔥 Efecto claro y preciso para fetch inicial y refresco automático:
   createEffect(() => {
-    if (props.reload !== undefined) {
-      listarCategoriasAdmin({ ...props.filtro, limit: 100 }).then(setCategoriasRaw);
-    }
+    const filtro = props.filtro;
+    const reload = props.reload;
+    fetchCategorias();
   });
 
   const moverCategoria = async (index: number, delta: number) => {
@@ -58,12 +54,7 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
       await actualizarOrdenCategorias(
         lista.map((cat) => ({ id: cat.id, orden: cat.orden }))
       );
-
-      // Actualizo en memoria
-      setCategoriasRaw({
-        ...categoriasRaw()!,
-        categorias: lista,
-      });
+      setCategoriasRaw({ ...categoriasRaw()!, categorias: lista });
     } catch (err) {
       console.error("Error al actualizar orden", err);
     }
@@ -76,10 +67,7 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
       const cat = lista.find((c) => c.id === id);
       if (cat) {
         cat.destacada = nuevaDestacada;
-        setCategoriasRaw({
-          ...categoriasRaw()!,
-          categorias: lista,
-        });
+        setCategoriasRaw({ ...categoriasRaw()!, categorias: lista });
       }
     } catch (err) {
       console.error("Error al actualizar destacada", err);
@@ -126,14 +114,6 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
             >
               Orden {iconoOrden("orden")}
             </th>
-            {/** 
-            <th
-              class="px-4 py-2 border-b cursor-pointer select-none"
-              onClick={() => cambiarOrden("destacada")}
-            >
-              Destacada {iconoOrden("destacada")}
-            </th>
-            */}
           </tr>
         </thead>
         <tbody>
@@ -154,23 +134,22 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
                     i() % 2 === 0 ? "bg-white" : "bg-gray-50"
                   } hover:bg-gray-100`}
                 >
-                <td class="px-4 py-2 border-b w-20">
-                  <Show when={cat.imagenUrl}>
-                    <img
-                      src={cat.imagenUrl}
-                      alt={cat.nombre}
-                      class="w-12 h-12 object-cover rounded"
-                      loading="lazy"
-                    />
-                  </Show>
-                </td>
+                  <td class="px-4 py-2 border-b w-20">
+                    <Show when={cat.imagenUrl}>
+                      <img
+                        src={cat.imagenUrl}
+                        alt={cat.nombre}
+                        class="w-12 h-12 object-cover rounded"
+                        loading="lazy"
+                      />
+                    </Show>
+                  </td>
                   <td
                     class="px-4 py-2 border-b cursor-pointer"
                     onClick={() => props.onCategoriaClick?.(cat)}
                   >
                     {cat.nombre}
                   </td>
-
                   <td class="px-4 py-2 border-b text-center">
                     <div class="flex flex-col items-center gap-1">
                       <div class="flex justify-center gap-1">
@@ -183,7 +162,9 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
                             ⬆️
                           </button>
                         </Show>
-                        <Show when={i() < (categoriasRaw()?.categorias.length || 0) - 1}>
+                        <Show
+                          when={i() < (categoriasRaw()?.categorias.length || 0) - 1}
+                        >
                           <button
                             onClick={() => moverCategoria(i(), 1)}
                             class="bg-gray-200 text-white text-base px-3 py-2 rounded"
@@ -195,17 +176,6 @@ export default function TablaCategorias(props: Props & { reload?: number }) {
                       </div>
                     </div>
                   </td>
-                  {/** 
-                  <td class="px-4 py-2 border-b text-center">
-                    <input
-                      type="checkbox"
-                      checked={cat.destacada}
-                      onChange={(e) =>
-                        handleActualizarDestacada(cat.id, e.currentTarget.checked)
-                      }
-                    />
-                  </td>
-                  */}
                 </tr>
               )}
             </For>

@@ -2,21 +2,38 @@
 module.exports = {
   content: [
     './index.html',
-    './src/**/*.{js,ts,jsx,tsx}'
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        fondo: '#f5f3f0',         // fondo general cálido
-        card: '#ffffff',          // fondo de tarjetas
-        texto: '#1e1e1e',         // texto principal
-        gris: '#a1a1a1',          // texto secundario
-        dorado: '#b8860b',        // acento dorado
-        crema: '#fafafa',         // alternativo para secciones claras
+        fondo: '#f8f8f8',
+        card: '#ffffff',
+        texto: '#111111',
+        gris: '#a1a1a1',
+        negro: '#000000',
+        blanco: '#ffffff',
+        acento: '#e11d48',
+      },
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+      },
+      animation: {
+        marquee: 'marquee 20s linear infinite',
+        'ping-short': 'ping 0.5s cubic-bezier(0, 0, 0.2, 1)'
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
       },
     },
   },
   plugins: [
-    require('tailwind-scrollbar-hide')
+    require('@tailwindcss/aspect-ratio'),
+    require('@tailwindcss/line-clamp'),
+    require('tailwind-scrollbar-hide'),
+    require('tailwind-scrollbar')
   ],
 }

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as productoService from '@/services/producto.service';
+import { sincronizarProductosDesdeDux } from "@/services/syncProductosDesdeDux.service";
 
 export async function getProductos(req: Request, res: Response) {
   try {
@@ -111,5 +112,17 @@ export async function uploadImagenesProducto(req: Request, res: Response) {
   } catch (error) {
     console.error("Error al subir imágenes:", error);
     res.status(400).json({ mensaje: 'Error al subir imágenes' });
+  }
+}
+
+export async function syncProductos(req: Request, res: Response) {
+  try {
+    const resultado = await sincronizarProductosDesdeDux();
+    res.status(200).json({
+      mensaje: `Productos sincronizados: ${resultado.creados} creados, ${resultado.actualizados} actualizados`,
+    });
+  } catch (error) {
+    console.error("❌ Error en sincronización de productos:", error);
+    res.status(500).json({ mensaje: "Hubo un error al sincronizar los productos." });
   }
 }

@@ -14,6 +14,12 @@ export const sequelize = new Sequelize(
     dialect: 'mysql',
     port: Number(process.env.DB_PORT) || 3306,
     logging: false,
+    pool: {
+      max: 10, // o incluso 5 si tu tráfico es bajo
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
   }
 );
 

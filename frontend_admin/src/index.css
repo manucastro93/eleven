@@ -90,3 +90,40 @@ body.sidebar-collapsed aside .sidebar-icon {
   opacity: 1;
   transform: translateX(0);
 }
+
+/* Scrollbar para sidebar */
+aside::-webkit-scrollbar {
+  width: 8px;
+}
+
+aside::-webkit-scrollbar-track {
+  background: #1f2937; /* bg-gray-900 */
+}
+
+aside::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* gray-600 */
+  border-radius: 4px;
+}
+
+aside:hover::-webkit-scrollbar-thumb {
+  background-color: #6b7280; /* gray-500 al hacer hover */
+}
+
+/* Firefox */
+aside {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+body.sidebar-collapsed aside nav::-webkit-scrollbar {
+  display: none;
+}
+
+body.sidebar-collapsed aside nav {
+  scrollbar-width: none; /* Para Firefox */
+}
+
+
+aside nav {
+  transition: overflow 0.3s ease;
+}

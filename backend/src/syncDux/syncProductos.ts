@@ -12,7 +12,7 @@ async function ejecutar() {
     const resultadoProductos = await sincronizarProductosDesdeDux();
 
     console.log(
-      `✅ Productos sincronizados: creados=${resultadoProductos.creados}, actualizados=${resultadoProductos.actualizados}, categorías nuevas=${resultadoProductos.categoriasNuevas}`
+      `✅ Productos sincronizados: creados=${resultadoProductos.creados}, actualizados=${resultadoProductos.actualizados}}`
     );
   } catch (error) {
     console.error("❌ Error general en la sincronización:", error instanceof Error ? error.message : error);

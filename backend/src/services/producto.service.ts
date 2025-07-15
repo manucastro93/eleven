@@ -155,7 +155,6 @@ export async function eliminarImagen(id: number) {
   }
 }
 
-
 export async function ordenarImagenes(productoId: number, ordenIds: number[]) {
   for (let i = 0; i < ordenIds.length; i++) {
     await models.ImagenProducto.update(

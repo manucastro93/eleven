@@ -7,6 +7,7 @@ export interface Producto {
   activo: boolean;
   imagenes: ImagenProducto[];
   categorias: Categoria[];
+  categoria: Categoria;
   slug: string;
   nuevo?: boolean;
   comentarios?: string;

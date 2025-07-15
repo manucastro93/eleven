@@ -3,7 +3,7 @@ import { Categoria } from "@/models/Categoria";
 
 export async function listarCategorias() {
   return await Categoria.findAll({
-    order: [["nombre", "ASC"]],
+    order: [["orden", "ASC"]],
   });
 }
 

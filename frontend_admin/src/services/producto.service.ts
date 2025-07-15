@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, apiFetchVoid } from "./api";
 import type { Producto } from "@/types/producto";
 
 export interface ListarProductosParams {
@@ -37,4 +37,10 @@ export async function listarProductos(params: ListarProductosParams): Promise<Li
     page,
     totalPages: Math.ceil(res.count / limit),
   };
+}
+
+export async function sincronizarProductosDesdeDux(): Promise<void> {
+  await apiFetchVoid("/productos/sync-dux", {
+    method: "POST"
+  });
 }

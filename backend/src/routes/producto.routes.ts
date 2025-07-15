@@ -8,7 +8,8 @@ import {
   putProducto,
   deleteImagenProducto,
   putOrdenImagenes,
-  uploadImagenesProducto
+  uploadImagenesProducto,
+  syncProductos
 } from '@/controllers/producto.controller';
 
 const router = Router();
@@ -39,6 +40,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/', getProductos);
 router.get('/:id', getProductoPorId);
 router.post('/', postProducto);
+router.post('/sync-dux', syncProductos);
 router.put('/:id', putProducto);
 
 router.post('/:productoId/imagenes', upload.array('imagenes', 10), uploadImagenesProducto as RequestHandler);

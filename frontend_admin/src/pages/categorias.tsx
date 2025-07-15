@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, createEffect } from "solid-js";
 import AdminLayout from "@/layout/AdminLayout";
 import FiltroCategorias from "@/components/categorias/FiltroCategorias";
 import TablaCategorias from "@/components/categorias/TablaCategorias";
@@ -20,6 +20,7 @@ export default function CategoriasPage() {
   });
   const [categoriaModal, setCategoriaModal] = createSignal<any | null>(null);
   const [reload, setReload] = createSignal(0);
+
   return (
     <AdminLayout>
       <h2 class="text-2xl font-bold mb-4">Categorías</h2>
@@ -29,15 +30,19 @@ export default function CategoriasPage() {
       <TablaCategorias
         filtro={filtro()}
         setFiltro={setFiltro}
+        reload={reload()}
         onCategoriaClick={(cat) => setCategoriaModal(cat)}
       />
 
       <Show when={categoriaModal()}>
-        <ModalCategoria
-          categoria={categoriaModal()!}
-          onClose={() => setCategoriaModal(null)}
-          onImagenActualizada={() => setReload(r => r + 1)}
-        />
+<ModalCategoria
+  categoria={categoriaModal()!}
+  onClose={() => setCategoriaModal(null)}
+  onImagenActualizada={() => {
+    console.log("🔥 onImagenActualizada llamado");
+    setReload(r => r + 1);
+  }}
+/>
       </Show>
     </AdminLayout>
   );

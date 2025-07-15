@@ -34,3 +34,17 @@ export interface Pedido {
   productos?: PedidoProducto[];
   historial?: HistorialPedido[];
 }
+
+export interface PedidoDashboard {
+  id: number;
+  cliente: string;
+  fecha: string;
+  estado: string;
+  items: {
+    producto: string;
+    cantidad: number;
+  }[];
+  diasDemora?: number;
+  diasEnProceso?: number;
+  total: number;
+}

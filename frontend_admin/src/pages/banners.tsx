@@ -3,6 +3,7 @@ import AdminLayout from "@/layout/AdminLayout";
 import FiltroBanners from "@/components/banners/FiltroBanners";
 import TablaBanners from "@/components/banners/TablaBanners";
 import ModalBanner from "@/components/banners/ModalBanner";
+import BotonNuevoBanner from "@/components/banners/BotonNuevoBanner";
 
 type FiltroBanners = {
   search: string;
@@ -33,8 +34,7 @@ export default function BannersPage() {
     <AdminLayout>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Banners</h2>
-        <button
-          class="btn"
+        <BotonNuevoBanner
           onClick={() =>
             setBannerModal({
               img: "",
@@ -49,9 +49,7 @@ export default function BannersPage() {
               activo: true,
             })
           }
-        >
-          Nuevo Banner
-        </button>
+        />
       </div>
 
       <FiltroBanners filtro={filtro()} setFiltro={setFiltro} />

@@ -9,14 +9,14 @@ import type { Producto } from "@/types/producto.type";
 export default function ProductoCard(p: Producto) {
   const { agregarAlCarrito } = useCarrito();
   const [cantidad, setCantidad] = createSignal(1);
-
+  const codigoLimpio = p.codigo.replace(/\D/g, "");
   const handleAgregar = () => {
     agregarAlCarrito({
       id: p.id,
       nombre: p.nombre,
       precio: p.precio,
       cantidad: cantidad(),
-      imagen: p.imagenes?.[0]?.url || ""
+      imagen: codigoLimpio || ""
     });
     mostrarToast("Producto agregado al carrito");
     log("agregar_al_carrito_card", { id: p.id, nombre: p.nombre, cantidad: cantidad() });

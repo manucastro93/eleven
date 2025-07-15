@@ -10,14 +10,16 @@ interface ProductoAttributes {
   precio: number;
   stock: number;
   categoriaId: number;
+  subcategoriaId?: number;
   imagen: string | null;
   activo: boolean;
+  slug: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
 }
 
-type ProductoCreationAttributes = Optional<ProductoAttributes, 'id' | 'imagen'>;
+type ProductoCreationAttributes = Optional<ProductoAttributes, 'id' | 'imagen' | 'slug'>;
 
 export class Producto extends Model<ProductoAttributes, ProductoCreationAttributes>
   implements ProductoAttributes {
@@ -28,9 +30,11 @@ export class Producto extends Model<ProductoAttributes, ProductoCreationAttribut
   public precio!: number;
   public stock!: number;
   public categoriaId!: number;
+  public subcategoriaId!: number;
   public imagen!: string | null;
   public activo!: boolean;
-
+  public slug!: string;
+  
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt!: Date;
@@ -68,6 +72,10 @@ export class Producto extends Model<ProductoAttributes, ProductoCreationAttribut
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      subcategoriaId: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: true
+      },
       imagen: {
         type: DataTypes.STRING,
         allowNull: true
@@ -76,7 +84,12 @@ export class Producto extends Model<ProductoAttributes, ProductoCreationAttribut
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true
-      }
+      },
+      slug: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
     }, {
       sequelize,
       modelName: 'Producto',

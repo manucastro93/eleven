@@ -1,90 +1,163 @@
-import { useParams, useNavigate } from "@solidjs/router";
-import { Component, createResource, Show, createSignal, onMount } from "solid-js";
-import SliderProductos from "@/components/SliderProductos";
+import { createResource, Show, For, createSignal } from "solid-js";
+import { useParams } from "@solidjs/router";
+import { obtenerProductoPorSlug } from "@/services/producto.service";
 import { useCarrito } from "@/store/carrito";
-import { formatearPrecio } from "@/utils/formato";
+import ModalGaleria from "@/components/producto/ModalGaleria";
+import ProductosRelacionados from "@/components/producto/ProductosRelacionados";
 import { mostrarToast } from "@/store/toast";
-import { log } from "@/utils/log";
-import { obtenerProductoPorSlug, listarProductos } from "@/services/producto.service";
 
-const ProductoDetalle: Component = () => {
+export default function ProductoDetalle() {
   const params = useParams();
-  const navigate = useNavigate();
-  const [producto] = createResource(() => params.slug, obtenerProductoPorSlug);
-  const [relacionados] = createResource(() => listarProductos({ pagina: 1 }));
-  const { agregarAlCarrito } = useCarrito();
+  const [producto] = createResource(() => obtenerProductoPorSlug(params.slug));
+  const {
+    agregarAlCarrito,
+    carrito,
+    setCarrito,
+    setPasoCarrito,
+  } = useCarrito();
+
+  const [zoomActivo, setZoomActivo] = createSignal(false);
+  const [zoomIndex, setZoomIndex] = createSignal(0);
   const [cantidad, setCantidad] = createSignal(1);
 
-  onMount(() => {
-    log("visita_producto", { slug: params.slug });
-  });
+  const handleAgregar = () => {
+    const p = producto();
+    if (!p) return;
+
+    const existentes = carrito();
+    const index = existentes.findIndex((item) => item.id === p.id);
+    const codigoLimpio = p.codigo.replace(/\D/g, "");
+    if (index >= 0) {
+      const actualizados = [...existentes];
+      actualizados[index].cantidad += cantidad();
+      setCarrito(actualizados);
+    } else {
+      agregarAlCarrito({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+        imagen: codigoLimpio ?? "",
+        cantidad: cantidad(),
+      });
+    }
+
+    localStorage.setItem("carrito", JSON.stringify(carrito()));
+    mostrarToast("Producto agregado al carrito");
+    //setPasoCarrito("resumen"); // opcional: por si querés que muestre el resumen
+  };
 
   return (
-    <main class="px-4 py-10 max-w-5xl mx-auto">
-      <Show when={producto()} fallback={<p>Cargando...</p>}>
+    <Show when={producto()}>
+      {(p) => (
         <>
-          <button
-            onClick={() => {
-              const scroll = sessionStorage.getItem("productos-scroll");
-              history.back();
-              setTimeout(() => scroll && window.scrollTo(0, parseInt(scroll)), 300);
-            }}
-            class="text-sm text-gray-500 hover:underline mb-6 block"
-          >
-            ← Volver
-          </button>
+          {/* CONTENIDO PRINCIPAL */}
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 py-8 max-w-7xl mx-auto">
+            {/* Galería con miniaturas */}
+            <div class="flex gap-4">
+              {/* Miniaturas scrollables */}
+              <Show when={p().imagenes.length > 1}>
+                <div class="flex flex-col gap-2 w-20 shrink-0 overflow-y-auto max-h-[500px] scroll-elegante p-1">
+                  <For each={p().imagenes}>
+                    {(img, i) => (
+                      <img
+                        src={`${import.meta.env.VITE_BACKEND_URL}${img.url}`}
+                        alt={`Miniatura ${i() + 1}`}
+                        class={`w-full cursor-pointer object-cover aspect-[4/4] transition ${
+                          i() === zoomIndex()
+                            ? "ring-2 ring-gray-300 bg-white shadow-sm scale-105"
+                            : "opacity-80 hover:opacity-100"
+                        }`}
+                        onClick={() => setZoomIndex(i())}
+                      />
+                    )}
+                  </For>
+                </div>
+              </Show>
 
-          <div class="grid md:grid-cols-2 gap-10">
-            <div class="bg-white rounded-xl shadow p-4">
-              <img src={producto()!.imagenes?.[0]?.url || "/img/default.jpg"} alt={producto()!.nombre} class="w-full h-auto object-contain" />
+              {/* Imagen principal */}
+              <div class="flex-1">
+                <img
+                  src={`${import.meta.env.VITE_BACKEND_URL}${p().imagenes[zoomIndex()]?.url}`}
+                  alt={p().nombre}
+                  class="w-full cursor-zoom-in object-contain aspect-[4/4]"
+                  onClick={() => setZoomActivo(true)}
+                />
+              </div>
             </div>
 
-            <div>
-              <h1 class="text-3xl font-bold text-[#1e1e1e] mb-4">{producto()!.nombre}</h1>
-              <p class="text-lg text-gray-600 mb-6">{producto()!.descripcion}</p>
-              <p class="text-2xl font-semibold text-[#b8860b] mb-4">{formatearPrecio(producto()!.precio)}</p>
+            {/* Info del producto */}
+            <div class="flex flex-col gap-4">
+              <div class="text-sm text-gray-500 uppercase tracking-wide">
+                {p().categoria?.nombre}
+              </div>
+              <h1 class="text-2xl font-semibold">{p().nombre}</h1>
+              <div class="text-xl font-bold text-gray-900">
+                ${p().precio.toLocaleString()}
+              </div>
 
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                <div class="flex items-center border border-gray-300 rounded-md overflow-hidden w-fit">
-                  <button type="button" class="px-2 text-gray-700 hover:bg-gray-200" onClick={() => setCantidad(Math.max(1, cantidad() - 1))}>−</button>
-                  <input type="number" min="1" value={cantidad()} onInput={(e) => setCantidad(Math.max(1, Number(e.currentTarget.value)))} class="w-12 text-center text-sm px-1 py-1 no-spin focus:outline-none" />
-                  <button type="button" class="px-2 text-gray-700 hover:bg-gray-200" onClick={() => setCantidad(cantidad() + 1)}>+</button>
+              {/* Selector de cantidad */}
+              <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-600">Cantidad:</span>
+                <div class="flex items-center border border-gray-300 rounded overflow-hidden">
+                  <button
+                    type="button"
+                    class="px-3 hover:bg-gray-100"
+                    onClick={() => setCantidad((c) => Math.max(1, c - 1))}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    class="no-spin w-12 text-center text-sm py-1 outline-none"
+                    value={cantidad()}
+                    onInput={(e) =>
+                      setCantidad(Math.max(1, Number(e.currentTarget.value)))
+                    }
+                  />
+                  <button
+                    type="button"
+                    class="px-3 hover:bg-gray-100"
+                    onClick={() => setCantidad((c) => c + 1)}
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 
+              {/* Botón agregar */}
               <button
-                class="bg-[#b8860b] hover:bg-[#d4af37] text-white px-6 py-2 rounded font-semibold"
-                onClick={() => {
-                  agregarAlCarrito({
-                    id: producto()!.id,
-                    nombre: producto()!.nombre,
-                    precio: producto()!.precio,
-                    cantidad: cantidad(),
-                    imagen: producto()!.imagenes?.[0]?.url || ""
-                  });
-                  mostrarToast("Producto agregado al carrito");
-                  log("agregar_al_carrito", { slug: params.slug, cantidad: cantidad() });
-                }}
+                onClick={handleAgregar}
+                class="mt-2 py-3 bg-black text-white text-sm rounded-lg font-medium hover:bg-gray-800 transition"
               >
                 Agregar al carrito
               </button>
+
+              {/* Descripción */}
+              <Show when={p().descripcion}>
+                <div class="mt-6 text-sm text-gray-700 whitespace-pre-line leading-relaxed border-t pt-4">
+                  {p().descripcion}
+                </div>
+              </Show>
             </div>
-          </div>
+          </section>
 
-          <Show when={relacionados()?.length}>
-            <section class="mt-20">
-              <SliderProductos
-                titulo="Productos relacionados"
-                productos={relacionados()!.filter(p => p.id !== producto()?.id).slice(0, 6)}
-                variante="relacionados"
-              />
-            </section>
+          {/* Modal fullscreen */}
+          <Show when={zoomActivo()}>
+            <ModalGaleria
+              imagenes={p().imagenes.map((i) => i.url)}
+              indexInicial={zoomIndex()}
+              onClose={() => setZoomActivo(false)}
+            />
           </Show>
-        </>
-      </Show>
-    </main>
-  );
-};
 
-export default ProductoDetalle;
+          {/* Productos relacionados */}
+          <ProductosRelacionados
+            categoriaSlug={p().categoria?.slug}
+            productoId={p().id}
+          />
+        </>
+      )}
+    </Show>
+  );
+}

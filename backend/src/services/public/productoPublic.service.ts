@@ -19,7 +19,11 @@ export async function listarProductosPublicos({
 }: FiltrosProducto) {
   const offset = (pagina - 1) * limite;
 
-  const where: any = { activo: true };
+  const where: any = {
+    activo: true,
+    stock: { [Op.gt]: 0 },
+  };
+  
   if (busqueda) {
     where[Op.or] = [
       { nombre: { [Op.iLike]: `%${busqueda}%` } },
@@ -87,6 +91,52 @@ export async function listarProductosPublicos({
     order,
     offset,
     limit: limite,
+  });
+
+  return productos;
+}
+
+export async function obtenerProductoPorSlug(slug: string) {
+  const producto = await models.Producto.findOne({
+    where: {
+      slug,
+      activo: true,
+    },
+    include: [
+      {
+        model: models.ImagenProducto,
+        as: "imagenes",
+      },
+      {
+        model: models.Categoria,
+        as: "categoria",
+      },
+    ],
+  });
+
+  return producto;
+}
+
+export async function listarProductosRelacionadosBackend(categoriaSlug: string, excluirId: number) {
+  const productos = await models.Producto.findAll({
+    where: {
+      activo: true,
+      id: { [Op.ne]: excluirId },
+    },
+    include: [
+      {
+        model: models.Categoria,
+        as: "categoria",
+        where: { slug: categoriaSlug },
+        required: true,
+      },
+      {
+        model: models.ImagenProducto,
+        as: "imagenes",
+      },
+    ],
+    limit: 10,
+    order: [["createdAt", "DESC"]],
   });
 
   return productos;

@@ -106,7 +106,6 @@ export async function putDestacadaCategoria(req: Request, res: Response) {
 export async function putImagenCategoria(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
-    console.log("file:", req.file);
     const file = req.file;
 
     if (!file) {

@@ -16,7 +16,18 @@ export async function listarProductos(params: {
   busqueda?: string;
   orden?: string;
   pagina?: number;
+  limite?: number;
 }): Promise<Producto[]> {
   const { data } = await api.get('/public/productos', { params });
+  return data;
+}
+
+export async function listarProductosRelacionados(
+  categoria: string,
+  excluir: number
+): Promise<Producto[]> {
+  const { data } = await api.get('/public/productos/relacionados', {
+    params: { categoria, excluir }
+  });
   return data;
 }

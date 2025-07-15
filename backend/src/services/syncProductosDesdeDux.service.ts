@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { models } from '@/config/db';
 import slugify from 'slugify';
+import { setProgresoSyncProductos } from '@/index'; // ✅ nuevo import
 
 const API_URL = process.env.DUX_API_URL_PRODUCTOS!;
 const API_KEY = process.env.DUX_API_KEY!;
@@ -16,7 +17,8 @@ interface DuxProducto {
     nombre: string;
     precio: string;
   }[];
-  sub_rubro?: { nombre: string };
+  rubro?: { id: number | null; nombre: string | null };
+  sub_rubro?: { id: number | null; nombre: string | null };
   stock?: {
     stock_real?: string;
   }[];
@@ -36,16 +38,15 @@ async function obtenerPaginaDesdeDux(offset: number, limit: number, intento = 1)
     return await axios.get(API_URL, {
       headers: { Authorization: API_KEY, Accept: 'application/json' },
       params: { offset, limit },
-      timeout: 15000 // 15 segundos por request
+      timeout: 15000
     });
   } catch (error: any) {
     console.warn(`⚠️ ECONNRESET en offset ${offset}. Reintentando intento ${intento}...`, error.message);
-
     if (error.code === 'ECONNRESET' && intento <= 3) {
-      await esperar(2000 * intento); // backoff progresivo: 2s, 4s, 6s
+      await esperar(2000 * intento);
       return obtenerPaginaDesdeDux(offset, limit, intento + 1);
     } else {
-      throw error; // si no es ECONNRESET o ya reintentó 3 veces → lanzar
+      throw error;
     }
   }
 }
@@ -61,7 +62,6 @@ async function obtenerTodosLosItemsDesdeDux(): Promise<DuxProducto[]> {
     console.log(`📦 Pidiendo página ${pagina} (offset ${offset})`);
 
     const res = await obtenerPaginaDesdeDux(offset, limit);
-
     const lote = res.data.results;
     if (!lote?.length) break;
 
@@ -71,12 +71,14 @@ async function obtenerTodosLosItemsDesdeDux(): Promise<DuxProducto[]> {
     }
 
     todos.push(...lote);
-
     offset += limit;
     pagina++;
 
     if (offset >= total) break;
 
+    const porcentaje = offset / total * 50;
+    setProgresoSyncProductos(porcentaje); // ✅ reemplazo
+    console.log(`Porcentaje de proceso total: ${porcentaje.toFixed(0)}%`);
     console.log('⏳ Esperando 5 segundos por rate-limit Dux...');
     await esperar(5000);
   }
@@ -84,33 +86,81 @@ async function obtenerTodosLosItemsDesdeDux(): Promise<DuxProducto[]> {
   return todos;
 }
 
+async function buscarOCrearCategoriaPorIdDux(
+  idDux: number | null | undefined,
+  nombre: string | null | undefined
+) {
+  const idFinal = typeof idDux === 'number' ? idDux : null;
+  const nombreFinal = nombre?.trim() || 'Sin categoría';
+  const whereClause: any = idDux != null
+    ? { id_dux: idDux }
+    : { nombre: nombreFinal };
+
+  const [categoria] = await models.Categoria.findOrCreate({
+    where: whereClause,
+    defaults: {
+      nombre: nombreFinal,
+      slug: slugify(nombreFinal, { lower: true }),
+      descripcion: '',
+      destacada: false,
+      id_dux: idFinal ?? undefined
+    }
+  });
+
+  return categoria;
+}
+
+async function buscarOCrearSubcategoriaPorIdDux(
+  idDux: number | null | undefined,
+  nombre: string | null | undefined,
+  categoriaId: number
+) {
+  const idFinal = typeof idDux === 'number' ? idDux : null;
+  const nombreFinal = nombre?.trim() || 'Sin subcategoría';
+  const whereClause: any = idDux != null
+    ? { id_dux: idDux, categoriaId }
+    : { nombre: nombreFinal, categoriaId };
+
+  const [subcategoria] = await models.Subcategoria.findOrCreate({
+    where: whereClause,
+    defaults: {
+      nombre: nombreFinal,
+      slug: slugify(nombreFinal, { lower: true }),
+      descripcion: '',
+      destacada: false,
+      id_dux: idFinal ?? undefined,
+      categoriaId
+    }
+  });
+
+  return subcategoria;
+}
+
 export async function sincronizarProductosDesdeDux() {
   const items = await obtenerTodosLosItemsDesdeDux();
 
   let creados = 0;
   let actualizados = 0;
-  const categoriasCreadas = new Set<number>();
+  const totalProds = items.length;
+  let porcentajeGuardado = 50;
+  console.log(`Se comienza a guardar los ${totalProds} productos desde Dux en la BD.`);
 
   for (const item of items) {
+    porcentajeGuardado += (50 / totalProds);
+    setProgresoSyncProductos(porcentajeGuardado); // ✅ reemplazo
+    console.log(`Porcentaje de proceso total: ${porcentajeGuardado.toFixed(0)}%.`);
+
     try {
-      const nombreCategoria =
-      (Array.isArray(item.sub_rubro)
-        ? item.sub_rubro[0]?.nombre
-        : item.sub_rubro?.nombre)?.trim() || 'Sin categoría';
+      const categoria = await buscarOCrearCategoriaPorIdDux(
+        item.rubro?.id ?? null,
+        item.rubro?.nombre ?? null
+      );
 
-
-      const [categoria, fueCreada] = await models.Categoria.findOrCreate({
-        where: { nombre: nombreCategoria },
-        defaults: {
-          nombre: nombreCategoria,
-          slug: slugify(nombreCategoria, { lower: true }),
-          descripcion: '',
-          orden: 0,
-          destacada: false
-        }
-      });
-
-      if (fueCreada) categoriasCreadas.add(categoria.id);
+      const subcategoria = await buscarOCrearSubcategoriaPorIdDux(
+        item.sub_rubro?.id ?? null,
+        item.sub_rubro?.nombre ?? null,
+        categoria.id
+      );
 
       const productoExistente = await models.Producto.findOne({
         where: { codigo: item.cod_item }
@@ -129,7 +179,9 @@ export async function sincronizarProductosDesdeDux() {
         precio: precioFinal,
         stock: calcularStock(item),
         categoriaId: categoria.id,
-        activo: true
+        subcategoriaId: subcategoria.id,
+        activo: true,
+        slug: slugify(`${item.item}-${item.cod_item}`, { lower: true }),
       };
 
       if (productoExistente) {
@@ -150,7 +202,6 @@ export async function sincronizarProductosDesdeDux() {
   return {
     mensaje: `Se sincronizaron ${items.length} productos desde Dux.`,
     creados,
-    actualizados,
-    categoriasNuevas: categoriasCreadas.size
+    actualizados
   };
 }

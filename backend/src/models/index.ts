@@ -4,6 +4,7 @@ import { Cliente } from './Cliente';
 import { Producto } from './Producto';
 import { ImagenProducto } from './ImagenProducto';
 import { Categoria } from './Categoria';
+import { Subcategoria } from './Subcategoria';
 import { ProductoCategoria } from './ProductoCategoria';
 import { EstadoPedido } from './EstadoPedido';
 import { MetodoEnvio } from './MetodoEnvio';
@@ -35,6 +36,7 @@ export function initModels(sequelize: Sequelize) {
   Producto.initModel(sequelize);
   ImagenProducto.initModel(sequelize);
   Categoria.initModel(sequelize);
+  Subcategoria.initModel(sequelize);
   ProductoCategoria.initModel(sequelize);
   EstadoPedido.initModel(sequelize);
   MetodoEnvio.initModel(sequelize);
@@ -69,6 +71,12 @@ export function initModels(sequelize: Sequelize) {
 
   CarritoProducto.belongsTo(Carrito, { as: 'carrito', foreignKey: 'carritoId' });
   CarritoProducto.belongsTo(Producto, { as: 'producto', foreignKey: 'productoId' });
+
+  Categoria.hasMany(Subcategoria, { as: 'subcategorias', foreignKey: 'categoriaId' });
+  Subcategoria.belongsTo(Categoria, { as: 'categoria', foreignKey: 'categoriaId' });
+  
+  Producto.belongsTo(Subcategoria, { as: 'subcategoria', foreignKey: 'subcategoriaId' });
+  Subcategoria.hasMany(Producto, { as: 'productos', foreignKey: 'subcategoriaId' });
 
   // Relaciones Cliente
   Cliente.hasMany(Pedido, { as: 'pedidos', foreignKey: 'clienteId' });
@@ -139,6 +147,7 @@ export function initModels(sequelize: Sequelize) {
     Producto,
     ImagenProducto,
     Categoria,
+    Subcategoria,
     ProductoCategoria,
     EstadoPedido,
     MetodoEnvio,

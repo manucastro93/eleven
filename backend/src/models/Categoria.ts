@@ -1,4 +1,3 @@
-
 import {
   Model, DataTypes, Sequelize, Optional
 } from 'sequelize';
@@ -11,12 +10,13 @@ interface CategoriaAttributes {
   orden: number;
   destacada: boolean;
   imagenUrl?: string;
+  id_dux?: number;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
 }
 
-type CategoriaCreationAttributes = Optional<CategoriaAttributes, 'id'>;
+type CategoriaCreationAttributes = Optional<CategoriaAttributes, 'id' | 'orden'>;
 
 export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttributes>
   implements CategoriaAttributes {
@@ -27,6 +27,7 @@ export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttri
   public orden!: number;
   public destacada!: boolean;
   public imagenUrl?: string;
+  public id_dux?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -64,14 +65,24 @@ export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttri
       imagenUrl: {
         type: DataTypes.STRING(500),
         allowNull: true,
-        defaultValue: null,
+        defaultValue: null
       },
+      id_dux: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: true,
+        unique: true
+      }
     }, {
       sequelize,
       modelName: 'Categoria',
       tableName: 'Categorias',
       timestamps: true,
       paranoid: true
+    });
+
+    Categoria.beforeCreate(async (categoria) => {
+      const ultima = await Categoria.findOne({ order: [['orden', 'DESC']] });
+      categoria.orden = (ultima?.orden || 0) + 1;
     });
 
     return Categoria;
