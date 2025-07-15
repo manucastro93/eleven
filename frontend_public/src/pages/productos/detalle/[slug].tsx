@@ -1,24 +1,51 @@
-import { createResource, Show, For, createSignal } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { createResource, Show, For, createSignal, onMount, createEffect } from "solid-js";
+import { useParams, useNavigate } from "@solidjs/router";
 import { obtenerProductoPorSlug } from "@/services/producto.service";
 import { useCarrito } from "@/store/carrito";
 import ModalGaleria from "@/components/producto/ModalGaleria";
 import ProductosRelacionados from "@/components/producto/ProductosRelacionados";
 import { mostrarToast } from "@/store/toast";
+import { ImagenConExtensiones } from "@/components/shared/ImagenConExtensiones";
+import { formatearPrecio } from "@/utils/formato";
 
 export default function ProductoDetalle() {
   const params = useParams();
-  const [producto] = createResource(() => obtenerProductoPorSlug(params.slug));
-  const {
-    agregarAlCarrito,
-    carrito,
-    setCarrito,
-    setPasoCarrito,
-  } = useCarrito();
+  const navigate = useNavigate();
+
+  const fetchProducto = () => obtenerProductoPorSlug(params.slug);
+  const [producto, { refetch }] = createResource(fetchProducto);
+
+  const { agregarAlCarrito, carrito, setCarrito } = useCarrito();
 
   const [zoomActivo, setZoomActivo] = createSignal(false);
   const [zoomIndex, setZoomIndex] = createSignal(0);
   const [cantidad, setCantidad] = createSignal(1);
+
+  const [imagenes, { refetch: refetchImagenes }] = createResource(async () => {
+    const p = await fetchProducto();
+    if (!p) return [];
+
+    const base = p.codigo.replace(/\D/g, "");
+    const letras = ["a", "b", "c", "d", "e"];
+    const extensiones = ["jpeg", "png", "jpg"];
+
+    const resultados: { codigo: string; letra: string }[] = [];
+
+    for (const letra of letras) {
+      for (const ext of extensiones) {
+        const url = `${import.meta.env.VITE_BACKEND_URL}/uploads/productos/${base}${letra}.${ext}`;
+        try {
+          const res = await fetch(url, { method: "HEAD" });
+          if (res.ok) {
+            resultados.push({ codigo: base, letra });
+            break;
+          }
+        } catch { }
+      }
+    }
+
+    return resultados;
+  });
 
   const handleAgregar = () => {
     const p = producto();
@@ -27,6 +54,7 @@ export default function ProductoDetalle() {
     const existentes = carrito();
     const index = existentes.findIndex((item) => item.id === p.id);
     const codigoLimpio = p.codigo.replace(/\D/g, "");
+
     if (index >= 0) {
       const actualizados = [...existentes];
       actualizados[index].cantidad += cantidad();
@@ -36,96 +64,120 @@ export default function ProductoDetalle() {
         id: p.id,
         nombre: p.nombre,
         precio: p.precio,
-        imagen: codigoLimpio ?? "",
+        imagen: codigoLimpio,
         cantidad: cantidad(),
       });
     }
 
     localStorage.setItem("carrito", JSON.stringify(carrito()));
     mostrarToast("Producto agregado al carrito");
-    //setPasoCarrito("resumen"); // opcional: por si querés que muestre el resumen
   };
+
+  onMount(() => {
+    const scrollY = sessionStorage.getItem("scrollY");
+    if (scrollY) {
+      window.scrollTo(0, parseInt(scrollY));
+    }
+  });
+
+  createEffect(() => {
+    params.slug;
+    refetch();
+    refetchImagenes();
+    setZoomIndex(0); // resetea al cambiar producto
+  });
 
   return (
     <Show when={producto()}>
       {(p) => (
         <>
-          {/* CONTENIDO PRINCIPAL */}
+          <div class="px-4 pt-4 max-w-7xl mx-auto text-sm text-gray-600">
+            <div class="flex gap-1 items-center mb-2">
+              <button
+                onClick={() => {
+                  sessionStorage.setItem("scrollY", window.scrollY.toString());
+                  navigate(-1);
+                }}
+                class="text-xs text-blue-600 hover:underline mr-2"
+              >
+                ← Volver
+              </button>
+              <span class="text-gray-400">/</span>
+              <a href="/" class="hover:underline">Inicio</a>
+              <span class="text-gray-400">/</span>
+              <a href="/shop" class="hover:underline">Shop</a>
+              <span class="text-gray-400">/</span>
+              <span>{p().categoria?.nombre}</span>
+            </div>
+          </div>
+
           <section class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 py-8 max-w-7xl mx-auto">
-            {/* Galería con miniaturas */}
             <div class="flex gap-4">
-              {/* Miniaturas scrollables */}
-              <Show when={p().imagenes.length > 1}>
+              <Show when={imagenes() && imagenes()!.length > 1}>
                 <div class="flex flex-col gap-2 w-20 shrink-0 overflow-y-auto max-h-[500px] scroll-elegante p-1">
-                  <For each={p().imagenes}>
+                  <For each={imagenes()}>
                     {(img, i) => (
-                      <img
-                        src={`${import.meta.env.VITE_BACKEND_URL}${img.url}`}
-                        alt={`Miniatura ${i() + 1}`}
-                        class={`w-full cursor-pointer object-cover aspect-[4/4] transition ${
-                          i() === zoomIndex()
+                      <div onClick={() => setZoomIndex(i())}>
+                        <ImagenConExtensiones
+                          codigo={img.codigo}
+                          letra={img.letra}
+                          class={`w-full cursor-pointer object-cover aspect-[4/4] transition ${i() === zoomIndex()
                             ? "ring-2 ring-gray-300 bg-white shadow-sm scale-105"
                             : "opacity-80 hover:opacity-100"
-                        }`}
-                        onClick={() => setZoomIndex(i())}
-                      />
+                            }`}
+                        />
+                      </div>
                     )}
                   </For>
                 </div>
               </Show>
 
-              {/* Imagen principal */}
               <div class="flex-1">
-                <img
-                  src={`${import.meta.env.VITE_BACKEND_URL}${p().imagenes[zoomIndex()]?.url}`}
-                  alt={p().nombre}
-                  class="w-full cursor-zoom-in object-contain aspect-[4/4]"
-                  onClick={() => setZoomActivo(true)}
-                />
+                {
+                  (() => {
+                    const lista = imagenes();
+                    if (!lista || lista.length === 0) return null;
+                    const actual = lista[zoomIndex()];
+                    return (
+                      <div onClick={() => setZoomActivo(true)}>
+                        <ImagenConExtensiones
+                          codigo={actual.codigo}
+                          letra={actual.letra}
+                          alt="Producto"
+                          class="w-full cursor-zoom-in object-contain aspect-[4/4]"
+                        />
+                      </div>
+                    );
+                  })()
+                }
               </div>
+
             </div>
 
-            {/* Info del producto */}
             <div class="flex flex-col gap-4">
               <div class="text-sm text-gray-500 uppercase tracking-wide">
                 {p().categoria?.nombre}
               </div>
-              <h1 class="text-2xl font-semibold">{p().nombre}</h1>
+              <h1 class="text-2xl font-semibold">{p().nombre} ({p().codigo})</h1>
               <div class="text-xl font-bold text-gray-900">
-                ${p().precio.toLocaleString()}
+                {formatearPrecio(p().precio)}
               </div>
 
-              {/* Selector de cantidad */}
               <div class="flex items-center gap-2 text-sm">
                 <span class="text-gray-600">Cantidad:</span>
                 <div class="flex items-center border border-gray-300 rounded overflow-hidden">
-                  <button
-                    type="button"
-                    class="px-3 hover:bg-gray-100"
-                    onClick={() => setCantidad((c) => Math.max(1, c - 1))}
-                  >
-                    −
-                  </button>
+                  <button type="button" class="px-3 hover:bg-gray-100" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>−</button>
                   <input
                     type="number"
                     min="1"
                     class="no-spin w-12 text-center text-sm py-1 outline-none"
                     value={cantidad()}
-                    onInput={(e) =>
-                      setCantidad(Math.max(1, Number(e.currentTarget.value)))
-                    }
+                    onInput={(e) => setCantidad(Math.max(1, Number(e.currentTarget.value)))}
                   />
-                  <button
-                    type="button"
-                    class="px-3 hover:bg-gray-100"
-                    onClick={() => setCantidad((c) => c + 1)}
-                  >
-                    +
-                  </button>
+                  <button type="button" class="px-3 hover:bg-gray-100" onClick={() => setCantidad((c) => c + 1)}>+</button>
                 </div>
               </div>
 
-              {/* Botón agregar */}
               <button
                 onClick={handleAgregar}
                 class="mt-2 py-3 bg-black text-white text-sm rounded-lg font-medium hover:bg-gray-800 transition"
@@ -133,7 +185,6 @@ export default function ProductoDetalle() {
                 Agregar al carrito
               </button>
 
-              {/* Descripción */}
               <Show when={p().descripcion}>
                 <div class="mt-6 text-sm text-gray-700 whitespace-pre-line leading-relaxed border-t pt-4">
                   {p().descripcion}
@@ -142,16 +193,14 @@ export default function ProductoDetalle() {
             </div>
           </section>
 
-          {/* Modal fullscreen */}
           <Show when={zoomActivo()}>
             <ModalGaleria
-              imagenes={p().imagenes.map((i) => i.url)}
+              imagenes={imagenes() || []}
               indexInicial={zoomIndex()}
               onClose={() => setZoomActivo(false)}
             />
           </Show>
 
-          {/* Productos relacionados */}
           <ProductosRelacionados
             categoriaSlug={p().categoria?.slug}
             productoId={p().id}

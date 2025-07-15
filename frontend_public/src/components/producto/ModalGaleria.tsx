@@ -1,8 +1,9 @@
 import { For, Show, createSignal, onMount, onCleanup } from "solid-js";
 import { X, ChevronLeft, ChevronRight } from "lucide-solid";
+import { ImagenConExtensiones } from "@/components/shared/ImagenConExtensiones";
 
 export default function ModalGaleria(props: {
-  imagenes: string[];
+  imagenes: { codigo: string; letra: string }[];
   indexInicial: number;
   onClose: () => void;
 }) {
@@ -41,11 +42,21 @@ export default function ModalGaleria(props: {
           <ChevronLeft size={32} />
         </button>
 
-        <img
-          src={`${import.meta.env.VITE_BACKEND_URL}${props.imagenes[index()]}`}
-          alt="zoom"
-          class="max-h-[80vh] max-w-full object-contain rounded"
-        />
+        <div>
+          {
+            (() => {
+              const img = props.imagenes[index()];
+              if (!img) return null;
+              return (
+                <ImagenConExtensiones
+                  codigo={img.codigo}
+                  letra={img.letra}
+                  class="max-h-[80vh] max-w-full object-contain rounded"
+                />
+              );
+            })()
+          }
+        </div>
 
         <button
           onClick={siguiente}
@@ -60,13 +71,15 @@ export default function ModalGaleria(props: {
         <div class="mt-6 flex gap-2 overflow-x-auto max-w-full px-4 scroll-elegante">
           <For each={props.imagenes}>
             {(img, i) => (
-              <img
-                src={`${import.meta.env.VITE_BACKEND_URL}${img}`}
-                class={`h-16 aspect-square object-cover cursor-pointer rounded border-2 transition ${
-                  index() === i() ? "border-white" : "border-white/30 hover:border-white/50"
-                }`}
-                onClick={() => setIndex(i())}
-              />
+              <div onClick={() => setIndex(i())}>
+                <ImagenConExtensiones
+                  codigo={img.codigo}
+                  letra={img.letra}
+                  class={`h-16 aspect-square object-cover cursor-pointer rounded border-2 transition ${
+                    index() === i() ? "border-white" : "border-white/30 hover:border-white/50"
+                  }`}
+                />
+              </div>
             )}
           </For>
         </div>

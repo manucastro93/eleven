@@ -21,13 +21,14 @@ export async function listarProductosPublicos({
 
   const where: any = {
     activo: true,
-    stock: { [Op.gt]: 0 },
+    stock: { [Op.gt]: 10 },
   };
-  
+
+  // ✅ Filtro por búsqueda (usando LIKE en lugar de ILIKE)
   if (busqueda) {
     where[Op.or] = [
-      { nombre: { [Op.iLike]: `%${busqueda}%` } },
-      { codigo: { [Op.iLike]: `%${busqueda}%` } },
+      { nombre: { [Op.like]: `%${busqueda}%` } },
+      { codigo: { [Op.like]: `%${busqueda}%` } },
     ];
   }
 
@@ -42,7 +43,7 @@ export async function listarProductosPublicos({
     },
   ];
 
-  // Si viene categoría por slug
+  // ✅ Filtro por categoría
   if (categoria && categoria !== "todos") {
     include.push({
       model: models.Categoria,
@@ -56,33 +57,33 @@ export async function listarProductosPublicos({
   let group: any = undefined;
   let order: any = [["nombre", "ASC"]];
 
+  // ✅ Ordenamientos disponibles
   if (orden === "precio-asc") order = [["precio", "ASC"]];
   else if (orden === "precio-desc") order = [["precio", "DESC"]];
   else if (orden === "nombre-desc") order = [["nombre", "DESC"]];
   else if (orden === "novedades" || orden === "fecha-desc") {
     order = [["createdAt", "DESC"]];
   } else if (orden === "destacado") {
-  attributes = {
-    include: [
-      [
-        Sequelize.literal(`(
-          SELECT SUM(pp.cantidad)
-          FROM PedidosProductos AS pp
-          INNER JOIN Pedidos AS p ON pp.pedidoId = p.id
-          WHERE pp.productoId = Producto.id
-            AND p.deletedAt IS NULL
-            AND pp.deletedAt IS NULL
-            AND p.createdAt >= '${dayjs().subtract(1, "month").format("YYYY-MM-DD HH:mm:ss")}'
-        )`),
-        "ventasUltimoMes",
+    attributes = {
+      include: [
+        [
+          Sequelize.literal(`(
+            SELECT SUM(pp.cantidad)
+            FROM PedidosProductos AS pp
+            INNER JOIN Pedidos AS p ON pp.pedidoId = p.id
+            WHERE pp.productoId = Producto.id
+              AND p.deletedAt IS NULL
+              AND pp.deletedAt IS NULL
+              AND p.createdAt >= '${dayjs().subtract(1, "month").format("YYYY-MM-DD HH:mm:ss")}'
+          )`),
+          "ventasUltimoMes",
+        ],
       ],
-    ],
-  };
+    };
+    order = [[Sequelize.literal("ventasUltimoMes"), "DESC"]];
+  }
 
-  order = [[Sequelize.literal("ventasUltimoMes"), "DESC"]];
-}
-
-
+  // ✅ Consulta final
   const productos = await models.Producto.findAll({
     where,
     include,

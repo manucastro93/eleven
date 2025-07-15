@@ -1,6 +1,7 @@
 import { createResource, For, Show } from "solid-js";
 import { listarProductos } from "@/services/producto.service";
 import { formatearPrecio } from "@/utils/formato";
+import { ImagenConExtensiones } from "@/components/shared/ImagenConExtensiones";
 
 interface Props {
   filtro: {
@@ -116,13 +117,8 @@ export default function TablaProductos(props: Props) {
                   onClick={() => props.onProductoClick?.(prod)}
                 >
                   <td class="px-4 py-2 border-b">
-                   <img
-                      src={
-                        [...(prod.imagenes || [])].sort((a, b) => a.orden - b.orden)[0]?.url
-                        || "/img/no-image.png"
-                      }
-                      alt="Img"
-                      class="h-10 w-10 object-cover rounded"
+                    <ImagenConExtensiones
+                      codigo={prod.codigo.replace(/[^a-zA-Z0-9]/g, "")}
                     />
                   </td>
                   <td class="px-4 py-2 border-b">{prod.codigo}</td>

@@ -6,7 +6,7 @@ export async function buscarDirecciones(localidadId: number, query: string) {
     where: {
       localidadId,
       nombre: {
-        [Op.iLike]: `%${query}%`
+        [Op.like]: `%${query}%`
       }
     },
     limit: 10,

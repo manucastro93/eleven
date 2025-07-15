@@ -1,9 +1,10 @@
-import { useParams } from "@solidjs/router";
+import { useParams, useSearchParams } from "@solidjs/router";
 import {
   createSignal,
   createEffect,
   For,
   onCleanup,
+  Show,
 } from "solid-js";
 import { listarProductos } from "@/services/producto.service";
 import ProductoCard from "@/components/common/ProductoCard";
@@ -12,6 +13,9 @@ import Breadcrumb from "@/components/common/Breadcrumb";
 
 export default function ProductosPorCategoria() {
   const params = useParams();
+  const [searchParams] = useSearchParams();
+  const busqueda = () => searchParams.busqueda?.toString().trim() || "";
+
 
   const [productos, setProductos] = createSignal<any[]>([]);
   const [pagina, setPagina] = createSignal(1);
@@ -31,6 +35,7 @@ export default function ProductosPorCategoria() {
     try {
       const nuevos = await listarProductos({
         categoria,
+        busqueda: busqueda(), // ✅ filtramos por texto
         pagina: pagina(),
         orden: orden(),
       });
@@ -53,16 +58,18 @@ export default function ProductosPorCategoria() {
     }
   };
 
-  // Reacciona al cambio de categoría u orden
-createEffect(() => {
-  const categoria = () => params.categoria?.toLowerCase(); // ← hacelo función
-  const ordenActual = orden();
-  setProductos([]);
-  setPagina(1);
-  setFin(false);
-  cargarProductos(categoria());
-});
+  // 🔁 Reactiva al cambiar categoría, orden o texto de búsqueda
+  createEffect(() => {
+    const categoria = params.categoria?.toLowerCase();
+    const ordenActual = orden();
+    const termino = busqueda();
 
+    setProductos([]);
+    setPagina(1);
+    setFin(false);
+
+    cargarProductos(categoria);
+  });
 
   // Scroll infinito
   createEffect(() => {
@@ -71,7 +78,6 @@ createEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          console.log("👀 Sentinel visible, cargando más...");
           cargarProductos(params.categoria);
         }
       },
@@ -100,9 +106,16 @@ createEffect(() => {
         />
 
         <div class="flex justify-between items-center mb-4">
-          <h1 class="text-xl font-semibold capitalize">
-            {params.categoria.replace(/-/g, " ")}
-          </h1>
+          <div>
+            <h1 class="text-xl font-semibold capitalize">
+              {params.categoria.replace(/-/g, " ")}
+            </h1>
+            <Show when={busqueda()}>
+              <p class="text-sm text-gray-500 mt-1">
+                Mostrando resultados para: <span class="font-medium">{busqueda()}</span>
+              </p>
+            </Show>
+          </div>
 
           <select
             class="text-sm border rounded px-2 py-1"
@@ -129,7 +142,7 @@ createEffect(() => {
         )}
         {fin() && productos().length === 0 && (
           <p class="text-center text-sm mt-8">
-            No hay productos en esta categoría.
+            No hay productos que coincidan con esta búsqueda.
           </p>
         )}
       </section>

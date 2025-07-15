@@ -42,9 +42,9 @@ export async function listarAuditorias({ search = '', limit = 20, offset = 0 }) 
     where: search
       ? {
           [Op.or]: [
-            { accion: { [Op.iLike]: `%${search}%` } },
-            { '$UsuarioAdmin.nombre$': { [Op.iLike]: `%${search}%` } },
-            { '$Modulo.nombre$': { [Op.iLike]: `%${search}%` } }
+            { accion: { [Op.like]: `%${search}%` } },
+            { '$UsuarioAdmin.nombre$': { [Op.like]: `%${search}%` } },
+            { '$Modulo.nombre$': { [Op.like]: `%${search}%` } }
           ]
         }
       : undefined,

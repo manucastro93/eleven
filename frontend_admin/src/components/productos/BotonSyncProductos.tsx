@@ -14,7 +14,6 @@ export default function BotonSyncProductos(props: { onFinalizado?: (ok: boolean)
     });
 
     socket.on("connect", () => {
-      console.log("✅ WebSocket conectado");
     });
   });
 

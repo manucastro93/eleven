@@ -12,7 +12,6 @@ export default function SidebarCategorias() {
     return match ? match[1] : null;
   });
   createEffect(() => {
-    console.log("📍 categoría actual:", categoriaActual());
   });
 
   return (

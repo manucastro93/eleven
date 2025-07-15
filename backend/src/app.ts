@@ -10,15 +10,16 @@ import path from 'path';
 import rutas from './routes';
 import { manejarErrores } from '@/middlewares/manejarErrores';
 import { manejarSesionAnonima } from '@/middlewares/sesionAnonima.middleware';
+import { obtenerOrigenPermitido } from '@/utils/cors.utils';
 
 const app = express();
 
 // ✅ Configuración de CORS global (antes de todo) — necesario para recursos estáticos y API
 const corsOptions = {
   origin: (origin: string | undefined, callback: Function) => {
-    const permitidos = ["http://localhost:5001", "http://localhost:5002"];
-    if (!origin || permitidos.includes(origin)) {
-      callback(null, true);
+    const resultado = obtenerOrigenPermitido(origin);
+    if (resultado !== false) {
+      callback(null, resultado);
     } else {
       callback(new Error("No permitido por CORS"));
     }
@@ -29,16 +30,23 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
-// ✅ Headers CORS manuales para archivos estáticos usados como imágenes, background-image, etc.
+// ✅ Middleware manual para agregar headers CORS ANTES del static
+app.use('/uploads', (req, res, next) => {
+  const origin = req.headers.origin;
+  const permitido = obtenerOrigenPermitido(origin);
+  if (permitido !== false) {
+    res.setHeader('Access-Control-Allow-Origin', permitido);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
+
+// ✅ Static sin setHeaders (porque arriba ya los seteamos)
 app.use(
   '/uploads',
-  express.static(path.join(__dirname, '..', 'uploads'), {
-    setHeaders: (res) => {
-      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5001');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-    },
-  })
+  express.static(path.join(__dirname, '..', 'uploads'))
 );
+
 
 // ✅ Middlewares globales
 app.use(cookieParser());
