@@ -105,13 +105,6 @@ onMount(() => {
       const productosRenderizados = document.querySelectorAll("[data-producto]").length;
       const alturaOk = document.body.scrollHeight >= scrollY;
 
-      console.log("🔁 intento", intentos, {
-        alturaOk,
-        productosRenderizados,
-        cantidadEsperada,
-        scrollHeight: document.body.scrollHeight,
-      });
-
       // 👉 si no hay suficientes productos renderizados, forzamos un fetch extra
       if (productosRenderizados < cantidadEsperada && !cargando() && !fin()) {
         await cargarProductos(params.categoria);
@@ -119,7 +112,6 @@ onMount(() => {
 
       if ((alturaOk && productosRenderizados >= cantidadEsperada) || intentos > 200) {
         window.scrollTo({ top: scrollY, behavior: "smooth" });
-        console.log("✅ restaurado a", scrollY);
         sessionStorage.removeItem("scrollY");
         sessionStorage.removeItem("cantidadProductos");
         setRestaurandoScroll(false);
