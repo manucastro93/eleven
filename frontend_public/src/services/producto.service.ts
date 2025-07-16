@@ -31,3 +31,15 @@ export async function listarProductosRelacionados(
   });
   return data;
 }
+
+export async function obtenerImagenesProducto(codigo: string): Promise<{ archivo: string; codigo: string; letra: string }[]> {
+  const codigoLimpio = codigo.replace(/\D/g, "");
+
+  const { data } = await api.get<string[]>(`/public/productos/${codigoLimpio}/imagenes`);
+  return data.map((nombre) => {
+    const match = nombre.match(/^(\d+)([a-z])\.\w+$/i);
+    return match
+      ? { archivo: nombre, codigo: match[1], letra: match[2] }
+      : { archivo: nombre, codigo: "", letra: "" };
+  });
+}

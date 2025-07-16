@@ -1,12 +1,13 @@
 import { createResource, Show, For, createSignal, onMount, createEffect } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
-import { obtenerProductoPorSlug } from "@/services/producto.service";
+import { obtenerProductoPorSlug, obtenerImagenesProducto } from "@/services/producto.service";
 import { useCarrito } from "@/store/carrito";
 import ModalGaleria from "@/components/producto/ModalGaleria";
 import ProductosRelacionados from "@/components/producto/ProductosRelacionados";
 import { mostrarToast } from "@/store/toast";
 import { ImagenConExtensiones } from "@/components/shared/ImagenConExtensiones";
 import { formatearPrecio } from "@/utils/formato";
+import Breadcrumb from "@/components/common/Breadcrumb";
 
 export default function ProductoDetalle() {
   const params = useParams();
@@ -21,31 +22,12 @@ export default function ProductoDetalle() {
   const [zoomIndex, setZoomIndex] = createSignal(0);
   const [cantidad, setCantidad] = createSignal(1);
 
-  const [imagenes, { refetch: refetchImagenes }] = createResource(async () => {
-    const p = await fetchProducto();
-    if (!p) return [];
+const [imagenes, { refetch: refetchImagenes }] = createResource(async () => {
+  const p = await fetchProducto();
+  if (!p) return [];
+  return await obtenerImagenesProducto(p.codigo);
+});
 
-    const base = p.codigo.replace(/\D/g, "");
-    const letras = ["a", "b", "c", "d", "e"];
-    const extensiones = ["jpeg", "png", "jpg"];
-
-    const resultados: { codigo: string; letra: string }[] = [];
-
-    for (const letra of letras) {
-      for (const ext of extensiones) {
-        const url = `${import.meta.env.VITE_BACKEND_URL}/uploads/productos/${base}${letra}.${ext}`;
-        try {
-          const res = await fetch(url, { method: "HEAD" });
-          if (res.ok) {
-            resultados.push({ codigo: base, letra });
-            break;
-          }
-        } catch { }
-      }
-    }
-
-    return resultados;
-  });
 
   const handleAgregar = () => {
     const p = producto();
@@ -64,6 +46,7 @@ export default function ProductoDetalle() {
         id: p.id,
         nombre: p.nombre,
         precio: p.precio,
+        codigo: p.codigo,
         imagen: codigoLimpio,
         cantidad: cantidad(),
       });
@@ -72,13 +55,6 @@ export default function ProductoDetalle() {
     localStorage.setItem("carrito", JSON.stringify(carrito()));
     mostrarToast("Producto agregado al carrito");
   };
-
-  onMount(() => {
-    const scrollY = sessionStorage.getItem("scrollY");
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY));
-    }
-  });
 
   createEffect(() => {
     params.slug;
@@ -92,25 +68,16 @@ export default function ProductoDetalle() {
       {(p) => (
         <>
           <div class="px-4 pt-4 max-w-7xl mx-auto text-sm text-gray-600">
-            <div class="flex gap-1 items-center mb-2">
-              <button
-                onClick={() => {
-                  sessionStorage.setItem("scrollY", window.scrollY.toString());
-                  navigate(-1);
-                }}
-                class="text-xs text-blue-600 hover:underline mr-2"
-              >
-                ← Volver
-              </button>
-              <span class="text-gray-400">/</span>
-              <a href="/" class="hover:underline">Inicio</a>
-              <span class="text-gray-400">/</span>
-              <a href="/shop" class="hover:underline">Shop</a>
-              <span class="text-gray-400">/</span>
-              <span>{p().categoria?.nombre}</span>
-            </div>
+            <Breadcrumb
+              items={[
+                { label: "Inicio", href: "/" },
+                { label: "Shop", href: "/categoria/todos" },
+                { label: p().categoria?.nombre || "Categoría", href: `/categoria/${p().categoria?.slug}` },
+                { label: `${p().nombre} (${p().codigo})` }
+              ]}
+              separador=">"
+            />
           </div>
-
           <section class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 py-8 max-w-7xl mx-auto">
             <div class="flex gap-4">
               <Show when={imagenes() && imagenes()!.length > 1}>
@@ -133,24 +100,25 @@ export default function ProductoDetalle() {
               </Show>
 
               <div class="flex-1">
-                {
-                  (() => {
-                    const lista = imagenes();
-                    if (!lista || lista.length === 0) return null;
-                    const actual = lista[zoomIndex()];
-                    return (
-                      <div onClick={() => setZoomActivo(true)}>
-                        <ImagenConExtensiones
-                          codigo={actual.codigo}
-                          letra={actual.letra}
-                          alt="Producto"
-                          class="w-full cursor-zoom-in object-contain aspect-[4/4]"
-                        />
-                      </div>
-                    );
-                  })()
-                }
-              </div>
+  {
+    (() => {
+      const lista = imagenes();
+      if (!lista || lista.length === 0) return null;
+      const actual = lista[zoomIndex()];
+      return (
+        <div onClick={() => setZoomActivo(true)}>
+          <img
+            src={`${import.meta.env.VITE_BACKEND_URL}/uploads/productos/${actual.archivo}`}
+            alt="Producto"
+            loading="lazy"
+            class="w-full cursor-zoom-in object-contain aspect-[4/4]"
+          />
+        </div>
+      );
+    })()
+  }
+</div>
+
 
             </div>
 

@@ -29,6 +29,7 @@ import { Carrito } from './Carrito';
 import { CarritoProducto } from './CarritoProducto';
 import { PedidoDux } from './PedidoDux';
 import { PedidoProductoDux } from './PedidoProductoDux';
+import { MensajeInformativo } from './MensajeInformativo';
 
 export function initModels(sequelize: Sequelize) {
   // Inicialización
@@ -61,6 +62,7 @@ export function initModels(sequelize: Sequelize) {
   CarritoProducto.initModel(sequelize);
   PedidoDux.initModel(sequelize);
   PedidoProductoDux.initModel(sequelize);
+  MensajeInformativo.initModel(sequelize);
 
   Carrito.belongsTo(Cliente, { as: 'cliente', foreignKey: 'clienteId' });
   Carrito.belongsTo(IP, { as: 'ip', foreignKey: 'ipId' });

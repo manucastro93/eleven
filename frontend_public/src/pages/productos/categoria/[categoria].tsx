@@ -5,6 +5,7 @@ import {
   For,
   onCleanup,
   Show,
+  onMount
 } from "solid-js";
 import { listarProductos } from "@/services/producto.service";
 import ProductoCard from "@/components/common/ProductoCard";
@@ -16,12 +17,12 @@ export default function ProductosPorCategoria() {
   const [searchParams] = useSearchParams();
   const busqueda = () => searchParams.busqueda?.toString().trim() || "";
 
-
   const [productos, setProductos] = createSignal<any[]>([]);
   const [pagina, setPagina] = createSignal(1);
   const [orden, setOrden] = createSignal<string>("precio-asc");
   const [cargando, setCargando] = createSignal(false);
   const [fin, setFin] = createSignal(false);
+  const [restaurandoScroll, setRestaurandoScroll] = createSignal(false);
 
   let sentinel!: HTMLDivElement;
   let ejecutando = false;
@@ -35,7 +36,7 @@ export default function ProductosPorCategoria() {
     try {
       const nuevos = await listarProductos({
         categoria,
-        busqueda: busqueda(), // ✅ filtramos por texto
+        busqueda: busqueda(),
         pagina: pagina(),
         orden: orden(),
       });
@@ -43,8 +44,6 @@ export default function ProductosPorCategoria() {
       if (nuevos.length === 0) {
         if (pagina() === 1) setProductos([]);
         setFin(true);
-        setCargando(false);
-        ejecutando = false;
         return;
       }
 
@@ -64,11 +63,12 @@ export default function ProductosPorCategoria() {
     const ordenActual = orden();
     const termino = busqueda();
 
-    setProductos([]);
-    setPagina(1);
-    setFin(false);
+if (restaurandoScroll()) return;
 
-    cargarProductos(categoria);
+  setProductos([]);
+  setPagina(1);
+  setFin(false);
+  cargarProductos(categoria);
   });
 
   // Scroll infinito
@@ -92,6 +92,48 @@ export default function ProductosPorCategoria() {
     setOrden(nuevoOrden);
   };
 
+  // ✅ Restaurar scroll preciso al volver del detalle
+onMount(() => {
+  const scrollY = parseInt(sessionStorage.getItem("scrollY") || "0");
+  const cantidadEsperada = parseInt(sessionStorage.getItem("cantidadProductos") || "0");
+
+  if (scrollY && cantidadEsperada) {
+    setRestaurandoScroll(true);
+    let intentos = 0;
+
+    const intentarRestaurar = async () => {
+      const productosRenderizados = document.querySelectorAll("[data-producto]").length;
+      const alturaOk = document.body.scrollHeight >= scrollY;
+
+      console.log("🔁 intento", intentos, {
+        alturaOk,
+        productosRenderizados,
+        cantidadEsperada,
+        scrollHeight: document.body.scrollHeight,
+      });
+
+      // 👉 si no hay suficientes productos renderizados, forzamos un fetch extra
+      if (productosRenderizados < cantidadEsperada && !cargando() && !fin()) {
+        await cargarProductos(params.categoria);
+      }
+
+      if ((alturaOk && productosRenderizados >= cantidadEsperada) || intentos > 200) {
+        window.scrollTo({ top: scrollY, behavior: "smooth" });
+        console.log("✅ restaurado a", scrollY);
+        sessionStorage.removeItem("scrollY");
+        sessionStorage.removeItem("cantidadProductos");
+        setRestaurandoScroll(false);
+      } else {
+        intentos++;
+        setTimeout(() => requestAnimationFrame(intentarRestaurar), 30);
+      }
+    };
+
+    requestAnimationFrame(intentarRestaurar);
+  }
+});
+
+
   return (
     <div class="bg-white flex px-4 pb-20 gap-6 max-w-[1440px] mx-auto">
       <SidebarCategorias />
@@ -103,6 +145,7 @@ export default function ProductosPorCategoria() {
             { label: "Shop", href: "/productos" },
             { label: params.categoria.replace(/-/g, " ") },
           ]}
+          separador=">"
         />
 
         <div class="flex justify-between items-center mb-4">
@@ -112,7 +155,8 @@ export default function ProductosPorCategoria() {
             </h1>
             <Show when={busqueda()}>
               <p class="text-sm text-gray-500 mt-1">
-                Mostrando resultados para: <span class="font-medium">{busqueda()}</span>
+                Mostrando resultados para:{" "}
+                <span class="font-medium">{busqueda()}</span>
               </p>
             </Show>
           </div>
@@ -131,14 +175,20 @@ export default function ProductosPorCategoria() {
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           <For each={productos()}>
-            {(prod) => <ProductoCard producto={prod} />}
+            {(prod) => (
+              <div data-producto>
+                <ProductoCard producto={prod} />
+              </div>
+            )}
           </For>
         </div>
 
         <div ref={(el) => (sentinel = el)} class="h-10" />
 
         {cargando() && (
-          <p class="text-center text-sm text-gray-500 my-4">Cargando más...</p>
+          <p class="text-center text-sm text-gray-500 my-4">
+            Cargando más...
+          </p>
         )}
         {fin() && productos().length === 0 && (
           <p class="text-center text-sm mt-8">

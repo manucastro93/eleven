@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js";
 import { useCarrito } from "@/store/carrito";
 import { formatearPrecio } from "@/utils/formato";
+import { ImagenConExtensiones } from "../shared/ImagenConExtensiones";
 
 export default function PasoResumen(props: { onSiguiente: () => void }) {
   const {
@@ -37,15 +38,14 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
           <For each={carrito()}>
             {(item) => (
               <div class="flex flex-col sm:flex-row sm:items-center gap-4 border-b pb-4">
-                <img
-                  src={`${import.meta.env.VITE_BACKEND_URL}/uploads/productos/${item.imagen}a.jpeg`}
-                  alt={item.nombre}
-                  class="w-20 h-20 object-cover rounded"
+                <ImagenConExtensiones
+                  codigo={item.codigo.replace(/\D/g, "")}
+                  letra="a"
+                  class="w-20 h-20 object-contain bg-white rounded"
                 />
-
                 <div class="flex-1 text-sm space-y-2">
                   <div class="flex justify-between items-start">
-                    <div class="font-medium">{item.nombre}</div>
+                    <div class="font-medium">{item.nombre} ({item.codigo})</div>
                     <button
                       onClick={() => quitarDelCarrito(item.id)}
                       class="text-red-500 text-xs"

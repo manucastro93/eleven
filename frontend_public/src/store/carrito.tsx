@@ -10,6 +10,7 @@ import {
 export type ItemCarrito = {
   id: number;
   nombre: string;
+  codigo: string;
   precio: number;
   cantidad: number;
   imagen?: string;
