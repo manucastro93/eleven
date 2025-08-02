@@ -1,4 +1,3 @@
-// src/services/banner.service.ts
 import api from './api';
 import type { Banner } from '@/types/banner.type';
 

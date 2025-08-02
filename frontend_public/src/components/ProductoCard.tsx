@@ -11,13 +11,15 @@ export default function ProductoCard(p: Producto) {
   const [cantidad, setCantidad] = createSignal(1);
   const codigoLimpio = p.codigo.replace(/\D/g, "");
   const handleAgregar = () => {
-    agregarAlCarrito({
-      id: p.id,
-      nombre: p.nombre,
-      precio: p.precio,
-      cantidad: cantidad(),
-      imagen: codigoLimpio || ""
-    });
+   agregarAlCarrito({
+    id: p.id,
+    nombre: p.nombre,
+    precio: p.precio,
+    codigo: p.codigo,
+    imagen: p.imagen,
+    cantidad: cantidad(),
+    slug: p.slug,
+  });
     mostrarToast("Producto agregado al carrito");
     log("agregar_al_carrito_card", { id: p.id, nombre: p.nombre, cantidad: cantidad() });
   };

@@ -1,4 +1,4 @@
-import api from '@/axios';
+import api from './api';
 
 export async function getMetodosEnvio() {
   return (await api.get('/metodos-envio')).data;

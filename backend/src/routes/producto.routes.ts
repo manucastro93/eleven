@@ -9,7 +9,8 @@ import {
   deleteImagenProducto,
   putOrdenImagenes,
   uploadImagenesProducto,
-  syncProductos
+  syncProductos,
+  patchItemsMenuProducto
 } from '@/controllers/producto.controller';
 
 const router = Router();
@@ -47,5 +48,6 @@ router.post('/:productoId/imagenes', upload.array('imagenes', 10), uploadImagene
 
 router.put('/:productoId/imagenes', putOrdenImagenes);
 router.delete('/imagen/:id', deleteImagenProducto);
+router.patch("/:id/items-menu", patchItemsMenuProducto as RequestHandler);
 
 export default router;

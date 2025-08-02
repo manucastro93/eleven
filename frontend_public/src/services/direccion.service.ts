@@ -1,4 +1,4 @@
-import api from '@/axios';
+import api from './api';
 
 export async function buscarDirecciones(localidadId: number, query: string) {
   const res = await api.get('/direcciones', {

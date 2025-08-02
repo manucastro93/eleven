@@ -1,59 +1,38 @@
-import { createEffect } from 'solid-js';
-import { useCarrito } from '@/store/carrito';
-import Paso1Resumen from './Paso1Resumen';
-import Paso2Formulario from './Paso2Formulario';
+import { Show, createSignal } from "solid-js";
+import { X } from "lucide-solid";
+import PasoResumen from "./PasoResumen";
+import FormPaso2 from "./FormularioCheckout/FormPaso2";
 
-export default function CarritoDesplegable() {
-  const {
-    mostrarCarrito,
-    setMostrarCarrito,
-    pasoCarrito,
-  } = useCarrito();
-
-  createEffect(() => {
-    if (mostrarCarrito()) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  });
+export default function CarritoDesplegable(props: { abierto: boolean; onClose: () => void }) {
+  const [paso, setPaso] = createSignal<1 | 2>(1);
 
   return (
-    <>
+    <Show when={props.abierto}>
       {/* Fondo oscuro */}
-      <div
-        class="fixed inset-0 bg-black/80 z-[998] transition-opacity duration-300"
-        classList={{
-          'opacity-100 pointer-events-auto': mostrarCarrito(),
-          'opacity-0 pointer-events-none': !mostrarCarrito(),
-        }}
-        onClick={() => setMostrarCarrito(false)}
-      />
+      <div class="fixed inset-0 bg-black/40 z-[9998]" onClick={props.onClose} />
 
-      {/* Carrito */}
-      <div
-        class="fixed inset-x-0 top-0 md:top-20 md:right-4 md:inset-x-auto z-[999] transition-all duration-300 px-2 md:px-0"
-        classList={{
-          'translate-y-0 opacity-100 pointer-events-auto': mostrarCarrito(),
-          '-translate-y-10 opacity-0 pointer-events-none': !mostrarCarrito(),
-        }}
-      >
-        <div class="bg-white rounded-none md:rounded-2xl shadow-2xl overflow-hidden border border-gray-200 max-h-[90vh] flex flex-col w-full md:w-[35rem] mx-auto">
-          <div class="flex justify-between items-center p-4 border-b text-gray-800 font-semibold">
-            <span class="text-2xl font-semibold">{pasoCarrito() === 1 ? '🛒 Tu carrito' : '📦 Tus datos'}</span>
-            <button
-              onClick={() => setMostrarCarrito(false)}
-              class="text-gray-400 hover:text-gray-700 text-xl"
-            >
-              ✕
-            </button>
-          </div>
+      {/* Panel lateral */}
+      <div class="fixed top-0 right-0 w-[600px] max-w-full h-full bg-white z-[9999] shadow-lg flex flex-col">
+        {/* Header */}
+        <div class="flex justify-between items-center px-5 py-4 border-b">
+          <h2 class="text-lg font-medium tracking-wide uppercase">
+            {paso() === 1 ? "Pedido" : "Tus datos"}
+          </h2>
+          <button onClick={props.onClose}>
+            <X size={22} />
+          </button>
+        </div>
 
-          <div class="p-4 overflow-auto flex-1">
-            {pasoCarrito() === 1 ? <Paso1Resumen /> : <Paso2Formulario />}
-          </div>
+        {/* Contenido */}
+        <div class="flex-1 overflow-y-auto">
+          <Show when={paso() === 1}>
+            <PasoResumen onSiguiente={() => setPaso(2)} />
+          </Show>
+          <Show when={paso() === 2}>
+            <FormPaso2 onVolver={() => setPaso(1)} />
+          </Show>
         </div>
       </div>
-    </>
+    </Show>
   );
 }

@@ -15,6 +15,7 @@ export type ItemCarrito = {
   cantidad: number;
   imagen?: string;
   comentario?: string;
+  slug: string;
 };
 
 type CarritoContextType = {

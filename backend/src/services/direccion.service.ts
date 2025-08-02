@@ -2,7 +2,7 @@ import { models } from '@/config/db';
 import { Op } from 'sequelize';
 
 export async function buscarDirecciones(localidadId: number, query: string) {
-  return await models.Direccion.findAll({
+  /*return await models.Direccion.findAll({
     where: {
       localidadId,
       nombre: {
@@ -11,5 +11,5 @@ export async function buscarDirecciones(localidadId: number, query: string) {
     },
     limit: 10,
     order: [['nombre', 'ASC']]
-  });
+  });*/
 }

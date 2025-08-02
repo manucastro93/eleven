@@ -7,6 +7,9 @@ export interface ClienteFormulario {
   direccion: string;
   localidad: string;
   provincia: string;
+  codigoPostal?: string;
+  transporte?: string;
+  whatsappVerificado?: boolean;
 }
 
 export interface Cliente {

@@ -1,9 +1,21 @@
-import { Op } from "sequelize";
 import { Categoria } from "@/models/Categoria";
+import { Subcategoria } from "@/models/Subcategoria";
+import { Op } from "sequelize";
 
 export async function listarCategorias() {
   return await Categoria.findAll({
-    order: [["orden", "ASC"]],
+    include: [
+      {
+        model: Subcategoria,
+        as: "subcategorias",
+        attributes: ["id", "nombre", "slug"],
+        required: false,
+      },
+    ],
+    order: [
+      ["orden", "ASC"],
+      [{ model: Subcategoria, as: "subcategorias" }, "orden", "ASC"],
+    ],
   });
 }
 

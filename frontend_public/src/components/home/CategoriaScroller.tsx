@@ -106,18 +106,20 @@ export default function CategoriaScroller() {
           {(cat) => (
             <button
               onClick={() => navigate(`/categoria/${cat.slug}`)}
-              class="flex-shrink-0 w-44 flex flex-col items-center text-sm select-none"
+              class="flex-shrink-0 w-24 md:w-44 flex flex-col items-center text-xs md:text-sm select-none"
             >
               <img
                 src={
                   cat.imagenUrl
-                    ? `${import.meta.env.VITE_BACKEND_URL}/${cat.imagenUrl}`
+                    ? `${import.meta.env.VITE_BACKEND_URL}${cat.imagenUrl}`
                     : "/placeholder.jpg"
                 }
                 alt={cat.nombre}
-                class="w-36 h-36 object-cover rounded-full border shadow"
+                class="w-20 h-20 md:w-36 md:h-36 object-cover rounded-full shadow"
+                draggable={false}
+                onDragStart={e => e.preventDefault()}
               />
-              <span class="mt-2 font-semibold text-center">{cat.nombre}</span>
+              <span class="mt-2 font-semibold text-center text-xs md:text-sm">{cat.nombre}</span>
             </button>
           )}
         </For>

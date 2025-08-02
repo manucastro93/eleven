@@ -4,6 +4,8 @@ interface Props {
     initialValue: string;
     textoBoton: string;
     onChange: (nuevoEstilo: string, top: number, left: number) => void;
+    top: number;
+    left: number;
 }
 
 export default function EditorEstiloBoton(props: Props) {
@@ -26,7 +28,7 @@ export default function EditorEstiloBoton(props: Props) {
         return `
       background-color: ${transparentBackground() ? "transparent" : bgColor()};
       color: ${textColor()};
-      font-size: ${fontSize()}px;
+      font-size: ${fontSize()}vw;
       padding: ${paddingV()}px ${paddingH()}px;
       border-radius: ${borderRadius()}px;
       border: ${borderWidth()}px solid ${borderColor()};
@@ -40,62 +42,64 @@ export default function EditorEstiloBoton(props: Props) {
         props.onChange(generarStyle(), top(), left());
     };
 
-onMount(() => {
-    const style = props.initialValue;
-
-    if (style.includes("background-color:")) {
-        const match = style.match(/background-color:\s*(transparent|#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
-        if (match) {
-            setBgColor(match[1] === "transparent" ? "#007bff" : match[1]);
-            setTransparentBackground(match[1] === "transparent");
+    onMount(() => {
+        const style = props.initialValue;
+        if (style.includes("background-color:")) {
+            const match = style.match(/background-color:\s*(transparent|#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
+            if (match) {
+                setBgColor(match[1] === "transparent" ? "#007bff" : match[1]);
+                setTransparentBackground(match[1] === "transparent");
+            }
         }
-    }
 
-    if (style.includes("color:")) {
-        const match = style.match(/color:\s*(#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
-        if (match) setTextColor(match[1]);
-    }
-
-    if (style.includes("font-size:")) {
-        const match = style.match(/font-size:\s*(\d+)px/);
-        if (match) setFontSize(parseInt(match[1]));
-    }
-
-    if (style.includes("padding:")) {
-        const match = style.match(/padding:\s*(\d+)px\s+(\d+)px/);
-        if (match) {
-            setPaddingV(parseInt(match[1]));
-            setPaddingH(parseInt(match[2]));
+        if (style.includes("color:")) {
+            const match = style.match(/(?<!background-)color:\s*(#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
+            if (match) setTextColor(match[1]);
         }
-    }
 
-    if (style.includes("border-radius:")) {
-        const match = style.match(/border-radius:\s*(\d+)px/);
-        if (match) setBorderRadius(parseInt(match[1]));
-    }
-
-    if (style.includes("border:")) {
-        const match = style.match(/border:\s*(\d+)px\s+solid\s+(#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
-        if (match) {
-            setBorderWidth(parseInt(match[1]));
-            setBorderColor(match[2]);
+        if (style.includes("font-size:")) {
+            const match = style.match(/font-size:\s*(\d+)vw/);
+            if (match) setFontSize(parseInt(match[1]));
         }
-    }
 
-    if (style.includes("font-weight: bold")) {
-        setBold(true);
-    }
+        if (style.includes("padding:")) {
+            const match = style.match(/padding:\s*(\d+)px\s+(\d+)px/);
+            if (match) {
+                setPaddingV(parseInt(match[1]));
+                setPaddingH(parseInt(match[2]));
+            }
+        }
 
-    if (style.includes("font-style: italic")) {
-        setItalic(true);
-    }
+        if (style.includes("border-radius:")) {
+            const match = style.match(/border-radius:\s*(\d+)px/);
+            if (match) setBorderRadius(parseInt(match[1]));
+        }
 
-    if (style.includes("box-shadow:")) {
-        setShadow(true);
-    }
+        if (style.includes("border:")) {
+            const match = style.match(/border:\s*(\d+)px\s+solid\s+(#[0-9a-fA-F]{6}|[a-zA-Z]+)/);
+            if (match) {
+                setBorderWidth(parseInt(match[1]));
+                setBorderColor(match[2]);
+            }
+        }
 
-    update();
-});
+        if (style.includes("font-weight: bold")) {
+            setBold(true);
+        }
+
+        if (style.includes("font-style: italic")) {
+            setItalic(true);
+        }
+
+        if (style.includes("box-shadow:")) {
+            setShadow(true);
+        }
+
+        setTop(props.top ?? 50);
+        setLeft(props.left ?? 50);
+        
+        update();
+    });
 
 
     return (
@@ -144,8 +148,8 @@ onMount(() => {
                     <label class="block mb-1">Tamaño de fuente: {fontSize()}px</label>
                     <input
                         type="range"
-                        min="10"
-                        max="40"
+                        min="1"
+                        max="5"
                         value={fontSize()}
                         onInput={(e) => {
                             setFontSize(parseInt(e.currentTarget.value));
@@ -169,7 +173,7 @@ onMount(() => {
                 </div>
 
                 <div>
-                    <label class="block mb-1">Padding horizontal: {paddingH()}px</label>
+                    <label class="block mb-1">Espaciado horizontal: {paddingH()}px</label>
                     <input
                         type="range"
                         min="0"
@@ -223,11 +227,11 @@ onMount(() => {
                 </div>
 
                 <div>
-                    <label class="block mb-1">Posición Top: {top()}px</label>
+                    <label class="block mb-1">Posición Top: {top()}%</label>
                     <input
                         type="range"
                         min="0"
-                        max="400"
+                        max="100"
                         value={top()}
                         onInput={(e) => {
                             setTop(parseInt(e.currentTarget.value));
@@ -237,11 +241,11 @@ onMount(() => {
                 </div>
 
                 <div>
-                    <label class="block mb-1">Posición Left: {left()}px</label>
+                    <label class="block mb-1">Posición Left: {left()}%</label>
                     <input
                         type="range"
                         min="0"
-                        max="750"
+                        max="100"
                         value={left()}
                         onInput={(e) => {
                             setLeft(parseInt(e.currentTarget.value));

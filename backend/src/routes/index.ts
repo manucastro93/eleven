@@ -3,6 +3,7 @@ import { Router } from 'express';
 import clienteRoutes from './cliente.routes';
 import productoRoutes from './producto.routes';
 import categoriaRoutes from "./categoria.routes";
+import subcategoriaRoutes from "./subcategorias.routes";
 import pedidoRoutes from './pedido.routes';
 import usuarioRoutes from './usuario.routes';
 import estadoPedidoRoutes from './estadoPedido.routes';
@@ -22,12 +23,15 @@ import estadisticasRoutes from './estadisticas.routes';
 import bannerRoutes from './banner.routes'
 import logSesionRoutes from './logSesion.routes';
 import publicRoutes from './public';
+import itemMenuRoutes from './itemMenu.routes';
+import whatsappRoutes from './whatsapp.routes';
 
 const router = Router();
 
 router.use('/clientes', clienteRoutes);
 router.use('/productos', productoRoutes);
 router.use("/categorias", categoriaRoutes);
+router.use("/subcategorias", subcategoriaRoutes);
 router.use('/pedidos', pedidoRoutes);
 router.use('/usuarios', usuarioRoutes);
 router.use('/estados-pedido', estadoPedidoRoutes);
@@ -47,5 +51,7 @@ router.use('/estadisticas', estadisticasRoutes);
 router.use('/banners', bannerRoutes);
 router.use(logSesionRoutes);
 router.use('/public', publicRoutes);
+router.use('/items-menu', itemMenuRoutes);
+router.use('/whatsapp', whatsappRoutes);
 
 export default router;

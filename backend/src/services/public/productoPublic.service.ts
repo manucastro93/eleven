@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 
 interface FiltrosProducto {
   categoria?: string;
+  subcategoria?: string;
   busqueda?: string;
   orden?: string;
   pagina?: number;
@@ -12,6 +13,7 @@ interface FiltrosProducto {
 
 export async function listarProductosPublicos({
   categoria,
+  subcategoria,
   busqueda = "",
   orden = "nombre-asc",
   pagina = 1,
@@ -22,6 +24,7 @@ export async function listarProductosPublicos({
   const where: any = {
     activo: true,
     stock: { [Op.gt]: 10 },
+    precio: { [Op.gt]: 0 },
   };
 
   // ✅ Filtro por búsqueda (usando LIKE en lugar de ILIKE)
@@ -40,6 +43,12 @@ export async function listarProductosPublicos({
     {
       model: models.Categoria,
       as: "categoria",
+    },
+    {
+      model: models.Subcategoria,
+      as: "subcategoria",
+      required: !!subcategoria,
+      where: subcategoria ? { slug: subcategoria } : undefined,
     },
   ];
 
@@ -112,6 +121,7 @@ export async function obtenerProductoPorSlug(slug: string) {
         model: models.Categoria,
         as: "categoria",
       },
+      { model: models.Subcategoria, as: "subcategoria" },
     ],
   });
 

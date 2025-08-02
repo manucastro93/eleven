@@ -10,12 +10,20 @@ interface ProductoUpdateData {
   codigo?: string;
   precio?: number;
   activo?: boolean;
+  stock?: number;
+  categoriaId?: number;
+  subcategoriaId?: number | null;
+  imagen?: string | null;
+  habilitado?: string | null;
+  fecha_creacion?: Date | null;
+  slug?: string;
 }
 
 export async function crearProducto(data: ProductoCreationAttributes, imagenes: string[] = []) {
   const {
     nombre, descripcion, codigo, precio, activo = true,
-    stock, categoriaId
+    stock, categoriaId, subcategoriaId = null, imagen = null,
+    habilitado = null, fecha_creacion = null, slug = null,
   } = data;
 
   if (!nombre || !descripcion || !codigo || precio === undefined || stock === undefined || !categoriaId) {
@@ -32,8 +40,13 @@ export async function crearProducto(data: ProductoCreationAttributes, imagenes: 
     precio,
     activo,
     stock,
-    categoriaId
-  });
+    categoriaId,
+    subcategoriaId,
+    imagen: imagen ?? undefined,
+    habilitado: habilitado ?? "SI",
+    fecha_creacion,
+    slug: slug ?? undefined,
+    });
 
   await Promise.all(
     imagenes.map((url, index) =>
@@ -44,14 +57,18 @@ export async function crearProducto(data: ProductoCreationAttributes, imagenes: 
   return producto;
 }
 
-export async function actualizarProducto(id: number, data: ProductoUpdateData, imagenes?: string[]) {
+export async function actualizarProducto(
+  id: number,
+  data: ProductoUpdateData,
+  imagenes?: string[]
+) {
   const producto = await models.Producto.findByPk(id);
   if (!producto) throw new Error('Producto no encontrado.');
 
-  const campos: (keyof ProductoUpdateData)[] = ['nombre', 'descripcion', 'codigo', 'precio', 'activo'];
-  for (const campo of campos) {
-    if (data[campo] !== undefined) {
-      (producto as any)[campo] = data[campo]; // cast temporal si TS se queja
+  // Solo actualiza campos presentes en data
+  for (const campo in data) {
+    if (Object.prototype.hasOwnProperty.call(data, campo)) {
+      (producto as any)[campo] = (data as any)[campo];
     }
   }
 
@@ -86,10 +103,8 @@ export async function listarProductos({
   categoriaId?: number | null;
 }) {
   const searchFilter = search.trim();
-
   const where: any = {};
 
-  // Filtro por search
   if (searchFilter) {
     where[Op.or] = [
       { nombre: { [Op.like]: `%${searchFilter}%` } },
@@ -97,12 +112,10 @@ export async function listarProductos({
     ];
   }
 
-  // Filtro por categoría
   if (categoriaId) {
     where.categoriaId = categoriaId;
   }
 
-  // Construir ORDER
   let order: any = [];
 
   if (orderBy === "categoria.nombre") {
@@ -111,11 +124,16 @@ export async function listarProductos({
     order = [[orderBy, orderDir]];
   }
 
-  // Query final
   return await models.Producto.findAndCountAll({
     where,
     include: [
-      { model: models.Categoria, as: "categoria" },
+      { model: models.Categoria, as: "categoria" }, // principal
+      { model: models.Subcategoria, as: "subcategoria" },
+      {
+        model: models.Categoria,
+        as: "categoriasAdicionales", // adicionales
+        through: { attributes: [] }
+      },
       { model: models.ImagenProducto, as: "imagenes" }
     ],
     order,
@@ -126,11 +144,25 @@ export async function listarProductos({
 
 export async function obtenerProductoPorId(id: number) {
   const producto = await models.Producto.findByPk(id, {
-    include: [{ model: models.ImagenProducto }],
-    order: [[models.ImagenProducto, 'orden', 'ASC']]
+    include: [
+      {
+        model: models.ImagenProducto,
+        as: "imagenes",
+        separate: true,
+        order: [['orden', 'ASC']]
+      },
+      {
+        model: models.ItemMenu,
+        as: "itemsMenu",
+        through: { attributes: [] }
+      },
+      { model: models.Categoria, as: "categoria" },
+      { model: models.Subcategoria, as: "subcategoria" },
+    ]
   });
 
-  if (!producto) throw new Error('Producto no encontrado.');
+  if (!producto) throw new Error("Producto no encontrado.");
+
   return producto;
 }
 
@@ -200,4 +232,11 @@ export async function agregarImagenes(productoId: number, files: Express.Multer.
   }
 
   return nuevasImagenes;
+}
+
+export async function actualizarItemsMenuProducto(id: number, itemsMenuIds: number[]) {
+  const producto = await models.Producto.findByPk(id);
+  if (!producto) throw new Error("Producto no encontrado.");
+
+  await producto.setItemsMenu(itemsMenuIds);
 }

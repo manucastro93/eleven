@@ -4,13 +4,13 @@ import {
 
 interface SubcategoriaAttributes {
   id: number;
+  id_sub_rubro: number;
   categoriaId: number;
   nombre: string;
   slug: string;
   descripcion?: string | null;
   orden: number;
   destacada: boolean;
-  id_dux?: number;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -21,13 +21,13 @@ type SubcategoriaCreationAttributes = Optional<SubcategoriaAttributes, 'id' | 'o
 export class Subcategoria extends Model<SubcategoriaAttributes, SubcategoriaCreationAttributes>
   implements SubcategoriaAttributes {
   public id!: number;
+  public id_sub_rubro!: number; // nuevo campo
   public categoriaId!: number;
   public nombre!: string;
   public slug!: string;
   public descripcion?: string | null;
   public orden!: number;
   public destacada!: boolean;
-  public id_dux?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -37,8 +37,12 @@ export class Subcategoria extends Model<SubcategoriaAttributes, SubcategoriaCrea
     Subcategoria.init({
       id: {
         type: DataTypes.INTEGER.UNSIGNED,
+        primaryKey: true,
         autoIncrement: true,
-        primaryKey: true
+      },
+      id_sub_rubro: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false
       },
       categoriaId: {
         type: DataTypes.INTEGER.UNSIGNED,
@@ -66,17 +70,20 @@ export class Subcategoria extends Model<SubcategoriaAttributes, SubcategoriaCrea
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
-      },
-      id_dux: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: true
       }
     }, {
       sequelize,
       modelName: 'Subcategoria',
       tableName: 'Subcategorias',
       timestamps: true,
-      paranoid: true
+      paranoid: true,
+      indexes: [
+        {
+          name: 'idx_categoria_subrubro',
+          unique: true,
+          fields: ['categoriaId', 'id_sub_rubro']
+        }
+      ]
     });
 
     Subcategoria.beforeCreate(async (subcat) => {

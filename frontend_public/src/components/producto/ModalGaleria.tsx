@@ -1,9 +1,8 @@
 import { For, Show, createSignal, onMount, onCleanup } from "solid-js";
 import { X, ChevronLeft, ChevronRight } from "lucide-solid";
-import { ImagenConExtensiones } from "@/components/shared/ImagenConExtensiones";
 
 export default function ModalGaleria(props: {
-  imagenes: { codigo: string; letra: string }[];
+  imagenes: { codigo: string; letra: string; url: string }[];
   indexInicial: number;
   onClose: () => void;
 }) {
@@ -48,9 +47,10 @@ export default function ModalGaleria(props: {
               const img = props.imagenes[index()];
               if (!img) return null;
               return (
-                <ImagenConExtensiones
-                  codigo={img.codigo}
-                  letra={img.letra}
+                <img
+                  src={img.url}
+                  alt="Producto"
+                  loading="lazy"
                   class="max-h-[80vh] max-w-full object-contain rounded"
                 />
               );
@@ -72,9 +72,9 @@ export default function ModalGaleria(props: {
           <For each={props.imagenes}>
             {(img, i) => (
               <div onClick={() => setIndex(i())}>
-                <ImagenConExtensiones
-                  codigo={img.codigo}
-                  letra={img.letra}
+                <img
+                  src={img.url}
+                  alt={`Imagen ${i() + 1}`}
                   class={`h-16 aspect-square object-cover cursor-pointer rounded border-2 transition ${
                     index() === i() ? "border-white" : "border-white/30 hover:border-white/50"
                   }`}

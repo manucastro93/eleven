@@ -10,7 +10,7 @@ import ProductoCard from "@/components/common/ProductoCard";
 import Breadcrumb from "@/components/common/Breadcrumb";
 
 export default function OfertasDelMes() {
-  const categoria = "rebajas"; // o "ofertas-del-mes", según tu slug real
+  const categoria = "ofertas-del-mes"
   const [productos, setProductos] = createSignal<any[]>([]);
   const [pagina, setPagina] = createSignal(1);
   const [orden, setOrden] = createSignal<string>("precio-asc");

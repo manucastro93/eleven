@@ -1,3 +1,9 @@
+export type Subcategoria = {
+  id: number;
+  nombre: string;
+  slug: string;
+};
+
 export interface Categoria {
   id: number;
   nombre: string;
@@ -6,4 +12,5 @@ export interface Categoria {
   orden: number;
   destacada: boolean;
   imagenUrl?: string | null;
+  subcategorias?: Subcategoria[];
 }

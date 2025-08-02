@@ -44,3 +44,21 @@ export async function sincronizarProductosDesdeDux(): Promise<void> {
     method: "POST"
   });
 }
+
+export async function obtenerProductoPorId(productoId: number): Promise<Producto> {
+  return await apiFetch<Producto>(`/productos/${productoId}`);
+}
+
+export async function actualizarItemsMenuProducto(
+  productoId: number,
+  itemsMenuIds: number[]
+): Promise<void> {
+  await apiFetchVoid(`/productos/${productoId}/items-menu`, {
+    method: "PATCH",
+    body: JSON.stringify({ itemsMenuIds }),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+}
+

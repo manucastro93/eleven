@@ -19,7 +19,7 @@ export default function ProductosPorCategoria() {
 
   const [productos, setProductos] = createSignal<any[]>([]);
   const [pagina, setPagina] = createSignal(1);
-  const [orden, setOrden] = createSignal<string>("precio-asc");
+  const [orden, setOrden] = createSignal<string>("-");
   const [cargando, setCargando] = createSignal(false);
   const [fin, setFin] = createSignal(false);
   const [restaurandoScroll, setRestaurandoScroll] = createSignal(false);
@@ -152,16 +152,16 @@ onMount(() => {
               </p>
             </Show>
           </div>
-
           <select
             class="text-sm border rounded px-2 py-1"
             value={orden()}
             onChange={(e) => handleOrdenChange(e.currentTarget.value)}
           >
+            <option value="-">Ordenar por</option>
             <option value="precio-asc">Menor precio</option>
             <option value="precio-desc">Mayor precio</option>
+            <option value="nombre-asc">Nombre A → Z</option>
             <option value="nombre-desc">Nombre Z → A</option>
-            <option value="novedades">Novedades</option>
           </select>
         </div>
 

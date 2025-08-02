@@ -78,7 +78,7 @@ export class Banner extends Model<BannerAttributes, BannerCreationAttributes>
       },
       texto: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       botonTexto: {
         type: DataTypes.STRING,

@@ -10,7 +10,6 @@ interface CategoriaAttributes {
   orden: number;
   destacada: boolean;
   imagenUrl?: string;
-  id_dux?: number;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -27,7 +26,6 @@ export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttri
   public orden!: number;
   public destacada!: boolean;
   public imagenUrl?: string;
-  public id_dux?: number;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -37,7 +35,6 @@ export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttri
     Categoria.init({
       id: {
         type: DataTypes.INTEGER,
-        autoIncrement: true,
         primaryKey: true
       },
       nombre: {
@@ -66,11 +63,6 @@ export class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttri
         type: DataTypes.STRING(500),
         allowNull: true,
         defaultValue: null
-      },
-      id_dux: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: true,
-        unique: true
       }
     }, {
       sequelize,

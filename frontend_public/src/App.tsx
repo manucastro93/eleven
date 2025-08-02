@@ -4,6 +4,8 @@ import Home from "@/pages/Home";
 import Contacto from "@/pages/Contacto";
 import LayoutPublic from "@/components/layout/LayoutPublic";
 import ProductosPorCategoria from "@/pages/productos/categoria/[categoria]";
+import ProductosPorSubcategoria from "@/pages/productos/subcategoria/[subcategoria]";
+import PaginaItemMenu from "@/pages/item/[slug]";
 import ProductoDetalle from "@/pages/productos/detalle/[slug]";
 import PaginaProductos from "@/pages/productos";
 import PaginaOfertas from "@/pages/OfertasDelMes";
@@ -27,7 +29,9 @@ export default function App() {
         <Route path="/" component={LayoutPublic}>
           <Route path="/" component={Home} />
           <Route path="/categoria/:categoria" component={ProductosPorCategoria} />
+          <Route path="/categoria/:categoria/subcategoria/:subcategoria" component={ProductosPorSubcategoria} />
           <Route path="/productos/detalle/:slug" component={ProductoDetalle} />
+          <Route path="/item/:slug" component={PaginaItemMenu} />
           <Route path="/ofertas-del-mes" component={PaginaOfertas} />
           <Route path="/nuevos-ingresos" component={PaginaNuevosIngresos} />
           <Route path="/info" component={PaginaInfo} />

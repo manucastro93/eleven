@@ -77,10 +77,11 @@ export default function BuscadorOverlay(props: { onClose: () => void }) {
                     props.onClose(); // ✅ cerrar overlay
                   }}
                 >
-                  <ImagenConExtensiones
-                    codigo={p.codigo.replace(/\D/g, "")}
-                    letra="a"
+                  <img
+                    src={p.imagen}
+                    alt={p.nombre || "Producto"}
                     class="h-20 w-20 object-cover rounded"
+                    loading="lazy"
                   />
                   <div class="flex flex-col justify-center">
                     <span class="text-sm text-gray-800 uppercase tracking-wide leading-tight">

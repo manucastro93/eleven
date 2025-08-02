@@ -5,7 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only --require ./tsconfig-paths-bootstrap.js src/index.ts",
-    "sync:productos": "ts-node --require ./tsconfig-paths-bootstrap.js src/syncDux/syncProductos.ts"
+    "sync:productos": "ts-node --require ./tsconfig-paths-bootstrap.js src/syncDux/syncProductosYCategoriasYSubcategorias.ts",
+    "cons:rubros": "ts-node --require ./tsconfig-paths-bootstrap.js src/syncDux/ConsultarRubros.ts",
+    "cons:productos": "ts-node --require ./tsconfig-paths-bootstrap.js src/syncDux/ConsultarProductos.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +26,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "mysql2": "^3.14.1",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "pg": "^8.15.6",
     "pg-hstore": "^2.3.4",

@@ -5,10 +5,11 @@ import path from "path";
 
 export async function getProductosPublic(req: Request, res: Response) {
   try {
-    const { categoria, busqueda, orden, pagina } = req.query;
+    const { categoria, subcategoria, busqueda, orden, pagina } = req.query;
 
     const productos = await productoPublicService.listarProductosPublicos({
       categoria: categoria?.toString(),
+      subcategoria: subcategoria?.toString(),
       busqueda: busqueda?.toString(),
       orden: orden?.toString(),
       pagina: parseInt(pagina?.toString() || '1'),

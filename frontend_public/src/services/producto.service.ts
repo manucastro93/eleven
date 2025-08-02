@@ -13,6 +13,7 @@ export async function obtenerProductoPorSlug(slug: string): Promise<Producto> {
 
 export async function listarProductos(params: {
   categoria?: string;
+  subcategoria?: string;
   busqueda?: string;
   orden?: string;
   pagina?: number;

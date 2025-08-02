@@ -85,6 +85,12 @@ export default function TablaProductos(props: Props) {
             </th>
             <th
               class="px-4 py-2 border-b cursor-pointer select-none"
+              onClick={() => cambiarOrden("categoria.nombre")}
+            >
+              Sub Categoría {iconoOrden("subcategoria.nombre")}
+            </th>
+            <th
+              class="px-4 py-2 border-b cursor-pointer select-none"
               onClick={() => cambiarOrden("precio")}
             >
               Precio {iconoOrden("precio")}
@@ -116,14 +122,17 @@ export default function TablaProductos(props: Props) {
                   } hover:bg-gray-100 cursor-pointer`}
                   onClick={() => props.onProductoClick?.(prod)}
                 >
-                  <td class="px-4 py-2 border-b">
-                    <ImagenConExtensiones
-                      codigo={prod.codigo.replace(/[^a-zA-Z0-9]/g, "")}
+                  <td class="px-4 py-2 border-b">    
+                    <img
+                      src={prod.imagen}
+                      alt="Producto"
+                      class="h-20 w-20 object-cover rounded"
                     />
                   </td>
                   <td class="px-4 py-2 border-b">{prod.codigo}</td>
                   <td class="px-4 py-2 border-b">{prod.nombre}</td>
                   <td class="px-4 py-2 border-b">{prod.categoria?.nombre}</td>
+                  <td class="px-4 py-2 border-b">{prod.subcategoria?.nombre}</td>
                   <td class="px-4 py-2 border-b">{formatearPrecio(prod.precio)}</td>
                   <td class="px-4 py-2 border-b">{prod.stock}</td>
                   

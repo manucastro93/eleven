@@ -4,6 +4,7 @@ export interface Producto {
   nombre: string;
   activo: boolean;
   descripcion: string;
+  imagen: string;
   imagenes?: {
     id: number;
     url: string;
@@ -13,6 +14,19 @@ export interface Producto {
     id: number;
     nombre: string;
   } | null;
+  categorias: {
+    id: number;
+    nombre: string;
+  }[];
+  subcategoria: {
+    id: number;
+    nombre: string;
+  } | null;
   precio: number;
   stock: number;
+  itemsMenu?: {
+    id: number;
+    nombre: string;
+  }[];
+
 }

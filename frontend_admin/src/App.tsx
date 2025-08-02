@@ -7,6 +7,8 @@ import ClientesPage from "@/pages/clientes";
 import PedidosPage from "@/pages/pedidos";
 import BannersPage from "@/pages/banners";
 import LoginPage from "@/pages/login";
+import ItemsMenuPage from "@/pages/itemsMenu";
+
 import RutaProtegida from "@/components/RutaProtegida";
 import { AuthProvider, useAuth } from "@/store/auth";
 import { intentarRecuperarSesion } from "@/services/auth.service";
@@ -81,6 +83,15 @@ function AppRoutes() {
             component={() => (
               <RutaProtegida>
                 <PedidosPage />
+              </RutaProtegida>
+            )}
+          />
+
+          <Route
+            path="/menu"
+            component={() => (
+              <RutaProtegida>
+                <ItemsMenuPage />
               </RutaProtegida>
             )}
           />

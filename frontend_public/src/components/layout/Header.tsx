@@ -44,7 +44,10 @@ export default function Header(props: { onCart: () => void }) {
           ref={(el) => (headerRef = el as HTMLDivElement)}
           class="flex items-center justify-between px-4 py-5 max-w-7xl mx-auto"
         >
-          <button onClick={() => setBuscarVisible(true)}>
+          <button
+            onClick={() => setBuscarVisible(true)}
+            class="hidden md:block"
+          >
             <Search size={24} />
           </button>
 
@@ -53,8 +56,13 @@ export default function Header(props: { onCart: () => void }) {
           </div>
 
           <div class="flex gap-4 items-center">
-            <button onClick={() => navigate("/mis-pedidos")}> <User size={24} /> </button>
-            <button onClick={props.onCart} class="relative">
+            <button
+              onClick={() => navigate("/mis-pedidos")}
+              class="hidden md:block"
+            >
+              <User size={24} />
+            </button>
+            <button onClick={props.onCart} class="relative hidden md:block">
               <ShoppingBag size={24} class={animarCarrito() ? "animate-bounce" : ""} />
               <Show when={cantidadItems() > 0}>
                 <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1 min-w-[1rem] text-center">

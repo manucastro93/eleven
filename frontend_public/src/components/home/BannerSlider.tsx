@@ -27,50 +27,39 @@ export default function BannerSlider() {
     slides: { perView: 1 }
   });
 
-return (
-  <>
-    {banners() && (
+  return (
+    <>
+      {banners() && (
+<div
+  ref={sliderRef}
+  class="keen-slider w-full aspect-[2/1] relative overflow-hidden"
+>
+  {banners()!.map((banner) => (
+    <div class="keen-slider__slide relative w-full h-full">
+      <img
+        src={`${import.meta.env.VITE_BACKEND_URL}${banner.img}`}
+        class="w-full h-full object-cover"
+      />
+
       <div
-        ref={sliderRef}
-        class="keen-slider w-full rounded-xl overflow-hidden"
-        style={{ height: "auto" }} // podés reemplazar luego por h-72 md:h-96 si querés
+        class="absolute"
+        style={`top: ${banner.textoTop}vh; left: ${banner.textoLeft}vw; width: ${banner.textoWidth}vw; z-index: 10; ${banner.descripcionEstilo || ""}`}
+        innerHTML={banner.texto}
+      />
+
+      <a
+        href={banner.botonLink}
+        class="absolute"
+        style={`top: ${banner.botonTop}vh; left: ${banner.botonLeft}vw; z-index: 10; ${banner.botonEstilo || ""}`}
       >
-        {banners()!.map((banner) => (
-          <div
-            class="keen-slider__slide relative w-full h-full"
+        {banner.botonTexto}
+      </a>
+    </div>
+  ))}
+</div>
 
-          >
-            <img
-  src={`${import.meta.env.VITE_BACKEND_URL}${banner.img}`}
-  class="w-full h-full object-contain"
-/>
-
-            <div
-              style={{
-                position: "absolute",
-                top: `${banner.textoTop}px`,
-                left: `${banner.textoLeft}px`,
-                width: `${banner.textoWidth || 50}%`,
-                ...parseStyleString(banner.descripcionEstilo),
-              }}
-              innerHTML={banner.texto}
-            />
-            <a
-              href={banner.botonLink}
-              style={{
-                position: "absolute",
-                top: `${banner.botonTop}px`,
-                left: `${banner.botonLeft}px`,
-                ...parseStyleString(banner.botonEstilo),
-              }}
-            >
-              {banner.botonTexto}
-            </a>
-          </div>
-        ))}
-      </div>
-    )}
-  </>
-);
+      )}
+    </>
+  );
 
 }

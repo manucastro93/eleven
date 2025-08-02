@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import Header from "./Header";
 import Footer from "./Footer";
-import SideCart from "../Carrito/SideCart";
+import SideCart from "../Carrito/CarritoDesplegable";
 import BottomNavbar from "./BottomNavbar";
 import Toast from "@/components/ui/Toast";
 import type { RouteSectionProps } from "@solidjs/router";

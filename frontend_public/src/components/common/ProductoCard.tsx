@@ -4,21 +4,14 @@ import type { Producto } from "@/types/producto.type";
 import { formatearPrecio } from "@/utils/formato";
 import { useCarrito } from "@/store/carrito";
 import { mostrarToast } from "@/store/toast";
-import { obtenerImagenesProducto } from "@/services/producto.service";
 
 export default function ProductoCard(props: { producto: Producto }) {
   const navigate = useNavigate();
   const { agregarAlCarrito, carrito, setCarrito } = useCarrito();
 
-  const { id, nombre, slug, precio, codigo } = props.producto;
+  const { id, nombre,imagen, slug, precio, codigo } = props.producto;
   const codigoLimpio = codigo.replace(/\D/g, "");
   const [cantidad, setCantidad] = createSignal(1);
-
-  // Nueva lógica: obtener primera imagen válida desde el backend
-  const [imagen, { refetch }] = createResource(async () => {
-    const imgs = await obtenerImagenesProducto(codigo);
-    return imgs[0]?.archivo ?? null;
-  });
 
   const handleAgregar = () => {
     const existentes = carrito();
@@ -34,8 +27,9 @@ export default function ProductoCard(props: { producto: Producto }) {
         nombre,
         precio,
         codigo,
-        imagen: codigoLimpio,
+        imagen,
         cantidad: cantidad(),
+        slug,
       });
     }
 
@@ -58,7 +52,7 @@ export default function ProductoCard(props: { producto: Producto }) {
       >
         <div class="w-full aspect-[4/5] bg-white rounded overflow-hidden">
           <Show
-            when={imagen()}
+            when={imagen}
             fallback={
               <img
                 src="/img/no-image.png"
@@ -68,10 +62,12 @@ export default function ProductoCard(props: { producto: Producto }) {
             }
           >
             <img
-              src={`${import.meta.env.VITE_BACKEND_URL}/uploads/productos/${imagen()}`}
+              src={imagen}
               alt={nombre}
               class="w-full h-full object-contain"
               loading="lazy"
+              draggable={false}
+  onDragStart={e => e.preventDefault()}
             />
           </Show>
         </div>

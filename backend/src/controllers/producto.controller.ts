@@ -18,6 +18,7 @@ export async function getProductos(req: Request, res: Response) {
     res.json(result);
   }catch (error) {
     if (error instanceof Error) {
+      console.error('❌ Error al obtener productos:', error);
       res.status(400).json({ mensaje: error.message });
     } else {
       res.status(400).json({ mensaje: 'Error inesperado', detalle: error });
@@ -124,5 +125,21 @@ export async function syncProductos(req: Request, res: Response) {
   } catch (error) {
     console.error("❌ Error en sincronización de productos:", error);
     res.status(500).json({ mensaje: "Hubo un error al sincronizar los productos." });
+  }
+}
+
+export async function patchItemsMenuProducto(req: Request, res: Response) {
+  try {
+    const productoId = Number(req.params.id);
+    const { itemsMenuIds } = req.body;
+
+    if (!Array.isArray(itemsMenuIds)) {
+      return res.status(400).json({ mensaje: "itemsMenuIds debe ser un array" });
+    }
+
+    await productoService.actualizarItemsMenuProducto(productoId, itemsMenuIds);
+    res.json({ mensaje: "Ítems de menú actualizados correctamente" });
+  } catch (error) {
+    res.status(400).json({ mensaje: "Error al actualizar ítems de menú", detalle: error });
   }
 }

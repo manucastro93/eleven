@@ -6,6 +6,7 @@ import ModalProducto from "@/components/productos/ModalProducto";
 import BotonSyncProductos from "@/components/productos/BotonSyncProductos";
 import type { Producto } from "@/types/producto";
 import { showToast } from "@/components/ui/ToastManager";
+import { obtenerProductoPorId } from "@/services/producto.service";
 
 type FiltroProductos = {
   search: string;
@@ -50,7 +51,10 @@ export default function ProductosPage() {
       <TablaProductos
         filtro={filtro()}
         setFiltro={setFiltro}
-        onProductoClick={(prod) => setProductoModal(prod)}
+        onProductoClick={async (prod) => {
+          const completo = await obtenerProductoPorId(prod.id);
+          setProductoModal(completo);
+        }}
       />
 
       <Show when={productoModal()}>

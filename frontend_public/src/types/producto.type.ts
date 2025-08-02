@@ -1,3 +1,6 @@
+import { Subcategoria, Categoria } from "./categoria.type";
+import { ItemMenu } from "./itemMenu.type";
+
 export interface Producto {
   id: number;
   nombre: string;
@@ -5,12 +8,16 @@ export interface Producto {
   descripcion?: string;
   precio: number;
   activo: boolean;
+  imagen: string;
   imagenes: ImagenProducto[];
   categorias: Categoria[];
   categoria: Categoria;
+  subcategoria: Subcategoria;
   slug: string;
   nuevo?: boolean;
   comentarios?: string;
+  itemsMenu?: ItemMenu[];
+
 }
 
 export interface ImagenProducto {
@@ -18,13 +25,6 @@ export interface ImagenProducto {
   url: string;
   orden: number;
   productoId?: number;
-}
-
-export interface Categoria {
-  id: number;
-  nombre: string;
-  slug: string;
-  orden: number;
 }
 
 export interface ProductosState {

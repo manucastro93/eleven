@@ -3,13 +3,11 @@ import type { LocalCreationAttributes } from '@/models/Local';
 
 export async function getLocales() {
   return await models.Local.findAll({
-    include: [{ model: models.Localidad }]
   });
 }
 
 export async function getLocalPorId(id: number) {
   return await models.Local.findByPk(id, {
-    include: [{ model: models.Localidad }]
   });
 }
 

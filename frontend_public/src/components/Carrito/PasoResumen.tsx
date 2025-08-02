@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js";
+import { A } from "@solidjs/router";
 import { useCarrito } from "@/store/carrito";
 import { formatearPrecio } from "@/utils/formato";
-import { ImagenConExtensiones } from "../shared/ImagenConExtensiones";
 
 export default function PasoResumen(props: { onSiguiente: () => void }) {
   const {
@@ -38,14 +38,26 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
           <For each={carrito()}>
             {(item) => (
               <div class="flex flex-col sm:flex-row sm:items-center gap-4 border-b pb-4">
-                <ImagenConExtensiones
-                  codigo={item.codigo.replace(/\D/g, "")}
-                  letra="a"
-                  class="w-20 h-20 object-contain bg-white rounded"
-                />
+                <A
+                  href={`/productos/detalle/${item.slug}`}
+                  class="block"
+                  tabIndex={-1}
+                >
+                  <img
+                    src={item.imagen}
+                    alt={item.nombre || "Producto"}
+                    class="w-20 h-20 object-contain bg-white rounded"
+                    loading="lazy"
+                  />
+                </A>
                 <div class="flex-1 text-sm space-y-2">
                   <div class="flex justify-between items-start">
-                    <div class="font-medium">{item.nombre} ({item.codigo})</div>
+                    <A
+                      href={`/productos/detalle/${item.slug}`}
+                      class="font-medium hover:underline"
+                    >
+                      {item.nombre} ({item.codigo})
+                    </A>
                     <button
                       onClick={() => quitarDelCarrito(item.id)}
                       class="text-red-500 text-xs"
@@ -119,10 +131,10 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
 
         {/* Footer fijo */}
         <div class="border-t px-5 py-4 bg-white sticky bottom-0 z-10">
-          <div class="flex justify-between items-center text-sm mb-2">
+          <div class="flex justify-between items-center text-lg mb-2">
             <span class="text-gray-700 font-semibold">💰 Total del pedido:</span>
             <span class="text-lg font-bold text-[#000000] tracking-wide">
-              {formatearPrecio(total())}
+              {formatearPrecio(total())} + IVA
             </span>
           </div>
           <button

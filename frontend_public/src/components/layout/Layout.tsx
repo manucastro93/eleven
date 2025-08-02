@@ -2,7 +2,7 @@
 import { JSX, children, createSignal } from "solid-js";
 import Header from "./Header";
 import BottomNavbar from "./BottomNavbar";
-import SideCart from "../Carrito/SideCart";
+import SideCart from "../Carrito/CarritoDesplegable";
 import FullMenu from "./FullMenu";
 
 export default function Layout(props: { children: JSX.Element }) {

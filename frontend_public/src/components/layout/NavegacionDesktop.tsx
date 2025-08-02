@@ -3,25 +3,20 @@ import { A } from "@solidjs/router";
 import { listarCategorias } from "@/services/categoria.service";
 import type { Categoria } from "@/types/categoria.type";
 import { headerRef, navRef, promoRef } from "./Header";
-
-const otrosItems = [
-  { nombre: "⛔ OFERTAS DEL MES ⛔", link: "/ofertas-del-mes" },
-  { nombre: "NUEVOS INGRESOS", link: "/nuevos-ingresos" },
-  { nombre: "INFO", link: "/info" },
-  { nombre: "NOSOTROS", link: "/nosotros" },
-];
+import { listarItemsMenu } from "@/services/itemMenu.service";
+import type { ItemMenu } from "@/types/itemMenu.type";
 
 export default function NavegacionDesktop(props: { refNav?: (el: HTMLDivElement) => void }) {
   const [hovered, setHovered] = createSignal(false);
   const [categorias] = createResource<Categoria[]>(listarCategorias);
   const [offsetTop, setOffsetTop] = createSignal(0);
+  const [itemsMenu] = createResource<ItemMenu[]>(listarItemsMenu);
 
   const calcularOffset = () => {
     const promo = promoRef?.offsetHeight || 0;
     const header = headerRef?.offsetHeight || 0;
-    setOffsetTop(promo + header + 58); // le sumamos margen de 8px para bajarlo
+    setOffsetTop(promo + header + 60); // le sumamos margen de 8px para bajarlo
   };
-
 
   onMount(() => {
     calcularOffset();
@@ -97,15 +92,23 @@ export default function NavegacionDesktop(props: { refNav?: (el: HTMLDivElement)
 
 
         {/* Otros ítems */}
-        <For each={otrosItems}>
-          {(item) => (
-            <li>
-              <A href={item.link} class="hover:text-acento font-medium px-2">
-                {item.nombre}
-              </A>
-            </li>
-          )}
-        </For>
+          <For each={itemsMenu()?.filter(item => item.activo)}>
+            {(item) => {
+              const slug = item.slug.toLowerCase();
+              const ruta =
+                slug === "info" ? "/info"
+                : slug === "nosotros" ? "/nosotros"
+                : `/item/${item.slug}`;
+
+              return (
+                <li>
+                  <A href={ruta} class="hover:text-acento font-medium px-2">
+                    {item.nombre}
+                  </A>
+                </li>
+              );
+            }}
+          </For>
       </ul>
     </nav>
   );

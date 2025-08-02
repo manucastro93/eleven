@@ -2,7 +2,7 @@ import HeaderDesktop from "@/layout/Header";
 import HeaderMobile from "@/layout/HeaderMobile";
 import Footer from "@/layout/Footer";
 import { RouteSectionProps } from "@solidjs/router";
-import CarritoDesplegable from '@/components/Carrito/CarritoDesplegable';
+import CarritoDesplegable from '@/components/Carrito/CarritoDesplegable_ELIMINAR?';
 import Toast from "@/components/ui/Toast";
 
 export default function LayoutPublic(props: RouteSectionProps) {

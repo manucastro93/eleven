@@ -55,9 +55,9 @@ export const crearBanner: RequestHandler = async (req: Request, res: Response): 
       fechaHasta,
       activo
     } = req.body;
-
+    
     const imgFilename = req.file ? `/uploads/banners/${req.file.filename}` : '';
-
+    console.log("nombre: ", imgFilename)
     const bannerData = {
       img: imgFilename,
       texto,
@@ -75,8 +75,9 @@ export const crearBanner: RequestHandler = async (req: Request, res: Response): 
       fechaHasta,
       activo: activo === '1'
     };
-
+console.log("banner data: ", bannerData)
     const nuevoBanner = await bannerService.crearBanner(bannerData);
+    
     res.status(201).json(nuevoBanner);
   } catch (error: unknown) {
     if (error instanceof Error) {

@@ -34,9 +34,15 @@ export async function obtenerBannerPorId(id: number) {
 }
 
 export async function crearBanner(data: any) {
-  // Crear un nuevo banner en la base de datos
-  return models.Banner.create(data);
+  // Obtener el orden más alto actual
+  const maxOrden = await models.Banner.max('orden');
+  const nuevoOrden = typeof maxOrden === 'number' ? maxOrden + 1 : 0;
+  return models.Banner.create({
+    ...data,
+    orden: nuevoOrden,
+  });
 }
+
 
 export async function actualizarBanner(id: number, data: any) {
   const banner = await models.Banner.findByPk(id);

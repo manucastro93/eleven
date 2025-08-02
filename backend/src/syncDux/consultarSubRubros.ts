@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const options = {
   method: 'GET',
-  url: 'https://erp.duxsoftware.com.ar/WSERP/rest/services/subrubros',
+  url: 'https://erp.duxsoftware.com.ar/WSERP/rest/services/subrubros?limit=50',
   headers: {
     accept: 'application/json',
     authorization: 'WuJv3P8jfSyXolGLPEWmu3xVCaKGgNRy4cJKGRb7ZPUrkkJRUyIEQOlkeMk9NLYJ'

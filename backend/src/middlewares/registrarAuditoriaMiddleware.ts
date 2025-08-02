@@ -7,9 +7,6 @@ import type { ModelStatic, Model } from 'sequelize';
 // Mapa de modelos conocidos, con tipado seguro
 const modelsMap: Record<string, ModelStatic<Model>> = {
   Cliente: models.Cliente,
-  Provincia: models.Provincia,
-  Localidad: models.Localidad,
-  Direccion: models.Direccion,
   Producto: models.Producto,
   ImagenProducto: models.ImagenProducto,
   Categoria: models.Categoria,
@@ -20,7 +17,7 @@ const modelsMap: Record<string, ModelStatic<Model>> = {
   Pedido: models.Pedido,
   PedidoProducto: models.PedidoProducto,
   IP: models.IP,
-  SesionIP: models.SesionIP,
+  //SesionIP: models.SesionIP,
   LogSesion: models.LogSesion,
   HistorialCliente: models.HistorialCliente,
   UsuarioAdmin: models.UsuarioAdmin,

@@ -1,0 +1,32 @@
+export interface ClienteDux {
+  id: number;
+  fechaCreacion?: string | null;
+  cliente?: string | null;
+  categoriaFiscal?: string | null;
+  tipoDocumento?: string | null;
+  numeroDocumento?: string | null;
+  cuitCuil?: string | null;
+  cobrador?: string | null;
+  tipoCliente?: string | null;
+  personaContacto?: string | null;
+  noEditable?: boolean | number | null;
+  lugarEntregaPorDefecto?: string | null;
+  tipoComprobantePorDefecto?: string | null;
+  listaPrecioPorDefecto?: string | null;
+  habilitado?: boolean | number | null;
+  nombreFantasia?: string | null;
+  codigo?: string | null;
+  correoElectronico?: string | null;
+  vendedor?: string | null;
+  provincia?: string | null;
+  localidad?: string | null;
+  barrio?: string | null;
+  domicilio?: string | null;
+  telefono?: string | null;
+  celular?: string | null;
+  zona?: string | null;
+  condicionPago?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+}
