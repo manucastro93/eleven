@@ -48,7 +48,24 @@ export async function listarLogs({
 }
 
 export async function registrarLogSesion(data: LogSesionData) {
-  return await models.LogSesion.create(data);
+  // Limpieza y validación defensiva antes de crear el log
+  const logData = {
+    sesionAnonimaId: String(data.sesionAnonimaId),
+    url: String(data.url).slice(0, 255),
+    accion: String(data.accion).slice(0, 255),
+    tiempoEnPagina: Number.isFinite(Number(data.tiempoEnPagina)) ? Number(data.tiempoEnPagina) : 0,
+    timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+    referrer: String(data.referrer || '').slice(0, 255),
+    extraData: data.extraData ?? null,
+  };
+
+  try {
+    return await models.LogSesion.create(logData);
+  } catch (err) {
+    // Ahora va a loguear el error con mucho más detalle
+    console.error('Error creando LogSesion:', err);
+    throw err;
+  }
 }
 
 export async function obtenerLogsPorSesion(sesionAnonimaId: string) {

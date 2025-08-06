@@ -14,11 +14,11 @@ import PaginaInfo from "@/pages/Info";
 import PaginaNosotros from "@/pages/Nosotros";
 import PaginaMisPedidos from "@/pages/MisPedidos";
 import { CarritoProvider } from './store/carrito';
-import { asegurarSesionAnonima } from "@/utils/sesionAnonima";
+import { asegurarSesionAnonimaOnly } from "@/utils/sesionAnonima";
 
 export default function App() {
   onMount(() => {
-    asegurarSesionAnonima().catch((err) => {
+    asegurarSesionAnonimaOnly().catch((err) => {
       console.error("Error creando sesión anónima:", err);
     });
   });

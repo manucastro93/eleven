@@ -15,7 +15,6 @@ export interface Producto {
   subcategoria: Subcategoria;
   slug: string;
   nuevo?: boolean;
-  comentarios?: string;
   itemsMenu?: ItemMenu[];
 
 }

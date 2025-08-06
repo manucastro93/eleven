@@ -136,3 +136,21 @@ img {
   max-width: 100%;
   display: block;
 }
+
+/* ========== SELECT ========== */
+.solid-select-list [data-value] {
+  color: #1f2937 !important;
+  background: #fff !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  padding: 0.65rem 1.2rem !important;
+}
+.solid-select-list [data-value]:hover,
+.solid-select-list [data-value][data-focused="true"] {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+.solid-select-list [data-value][data-selected="true"] {
+  background: #000 !important;
+  color: #fff !important;
+}

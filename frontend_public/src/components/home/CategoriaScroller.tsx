@@ -2,10 +2,12 @@ import { For, createResource, onMount, onCleanup } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { listarCategorias } from "@/services/categoria.service";
 import type { Categoria } from "@/types/categoria.type";
+import { useLogSesion } from "@/hooks/useLogSesion";
 
 export default function CategoriaScroller() {
   const navigate = useNavigate();
   const [categorias] = createResource<Categoria[]>(listarCategorias);
+  const logSesion = useLogSesion();
 
   let sliderRef: HTMLDivElement | undefined;
   let intervalId: number | undefined;
@@ -105,7 +107,15 @@ export default function CategoriaScroller() {
         <For each={categorias()}>
           {(cat) => (
             <button
-              onClick={() => navigate(`/categoria/${cat.slug}`)}
+              onClick={() => {
+                logSesion("click_categoria_scroller", {
+                  categoriaId: cat.id,
+                  categoria: cat.nombre,
+                  slug: cat.slug,
+                  origen: "categoria_scroller"
+                });
+                navigate(`/categoria/${cat.slug}`);
+              }}
               class="flex-shrink-0 w-24 md:w-44 flex flex-col items-center text-xs md:text-sm select-none"
             >
               <img

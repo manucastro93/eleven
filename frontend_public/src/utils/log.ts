@@ -1,4 +1,4 @@
-let startTime = Date.now();
+export let startTime = Date.now();
 
 export function log(
   accion: string,

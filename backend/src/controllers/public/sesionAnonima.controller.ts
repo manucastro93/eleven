@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { crearSesionAnonima, vincularSesionConCliente, obtenerSesionPorId } from '@/services/public/sesionAnonima.service';
 import { v4 as uuidv4 } from 'uuid';
+import { mergearCarritosClienteYAnonimo } from '@/utils/mergeCarritos';
 
 export async function getSesionActual(req: Request, res: Response) {
   const sesionId = req.cookies.clienteAnonimoId;
@@ -25,9 +26,19 @@ export async function postVincularSesion(req: Request, res: Response) {
 
   try {
     await vincularSesionConCliente(sesionId, clienteId);
-    res.json({ mensaje: 'Sesión vinculada correctamente' });
+
+    const resultadoMerge = await mergearCarritosClienteYAnonimo(clienteId, sesionId);
+
+    res.json({ 
+      mensaje: 'Sesión y carritos vinculados correctamente',
+      ...resultadoMerge
+    });
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al vincular sesión', error });
+    if (error instanceof Error && error.message.includes('Sesión no encontrada')) {
+      res.status(404).json({ mensaje: error.message });
+    } else {
+      res.status(500).json({ mensaje: 'Error al vincular sesión/carritos', error });
+    }
   }
 }
 

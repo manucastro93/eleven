@@ -2,10 +2,12 @@ import { A, useLocation } from "@solidjs/router";
 import { createResource, For, Show, createMemo } from "solid-js";
 import { listarCategorias } from "@/services/categoria.service";
 import type { Categoria } from "@/types/categoria.type";
+import { useLogSesion } from "@/hooks/useLogSesion";
 
 export default function SidebarCategorias() {
   const location = useLocation();
   const [categorias] = createResource<Categoria[]>(listarCategorias);
+  const logSesion = useLogSesion();
 
   // Extrae el slug de categoría (siempre está)
   const categoriaActual = createMemo(() => {
@@ -58,6 +60,13 @@ export default function SidebarCategorias() {
                           ? "bg-gray-100 text-black font-semibold"
                           : "hover:bg-gray-50 text-gray-800"
                       }`}
+                      onClick={() => {
+                        logSesion("click_categoria_sidebar", {
+                          categoriaId: cat.id,
+                          categoria: cat.nombre,
+                          slug: cat.slug,
+                        });
+                      }}
                     >
                       {cat.nombre}
                     </A>
@@ -77,6 +86,16 @@ export default function SidebarCategorias() {
                                   ? "text-black font-semibold bg-gray-50"
                                   : "text-gray-600 hover:text-black hover:bg-gray-50"
                               }`}
+                               onClick={() => {
+                                  logSesion("click_subcategoria_sidebar", {
+                                    categoriaId: cat.id,
+                                    categoria: cat.nombre,
+                                    slug: cat.slug,
+                                    subcategoriaId: sub.id,
+                                    subcategoria: sub.nombre,
+                                    subSlug: sub.slug,
+                                  });
+                                }}
                             >
                               {sub.nombre}
                             </A>

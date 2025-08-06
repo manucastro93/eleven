@@ -4,16 +4,18 @@ import type { Producto } from "@/types/producto.type";
 import { formatearPrecio } from "@/utils/formato";
 import { useCarrito } from "@/store/carrito";
 import { mostrarToast } from "@/store/toast";
+import { useLogSesion } from '@/hooks/useLogSesion';
 
 export default function ProductoCard(props: { producto: Producto }) {
   const navigate = useNavigate();
-  const { agregarAlCarrito, carrito, setCarrito } = useCarrito();
+  const { agregarAlCarrito, carrito, setCarrito, actualizarCantidadEnCarrito } = useCarrito();
 
   const { id, nombre,imagen, slug, precio, codigo } = props.producto;
-  const codigoLimpio = codigo.replace(/\D/g, "");
+  const logSesion = useLogSesion();
   const [cantidad, setCantidad] = createSignal(1);
 
-  const handleAgregar = () => {
+const handleAgregar = async () => {
+  try {
     const existentes = carrito();
     const index = existentes.findIndex((item) => item.id === id);
 
@@ -21,26 +23,38 @@ export default function ProductoCard(props: { producto: Producto }) {
       const actualizados = [...existentes];
       actualizados[index].cantidad += cantidad();
       setCarrito(actualizados);
+      await actualizarCantidadEnCarrito(id, actualizados[index].cantidad);
     } else {
-      agregarAlCarrito({
+      await agregarAlCarrito({
         id,
         nombre,
         precio,
         codigo,
         imagen,
         cantidad: cantidad(),
+        observaciones: "",
         slug,
       });
     }
 
-    localStorage.setItem("carrito", JSON.stringify(carrito()));
     mostrarToast("Producto agregado al carrito");
-  };
+  } catch (error) {
+    console.error("Error agregando producto al carrito:", error);
+    mostrarToast("Error al agregar producto. Intentá de nuevo.");
+  }
+};
+
 
   return (
     <div class="cursor-pointer text-sm p-2 rounded-lg hover:shadow-sm transition">
       <div
         onClick={async () => {
+          await logSesion("click_producto_card", {
+            productoId: id,
+            nombre,
+            slug,
+          });
+
           const scrollActual = window.scrollY;
           const cantidad = document.querySelectorAll("[data-producto]").length;
 

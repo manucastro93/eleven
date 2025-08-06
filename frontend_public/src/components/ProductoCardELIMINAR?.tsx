@@ -3,29 +3,44 @@ import { A } from "@solidjs/router";
 import { useCarrito } from "@/store/carrito";
 import { mostrarToast } from "@/store/toast";
 import { formatearPrecio } from "@/utils/formato";
-import { log } from "@/utils/log";
 import type { Producto } from "@/types/producto.type";
+import { useTrackAction } from "@/hooks/useTrackAction";
 
 export default function ProductoCard(p: Producto) {
   const { agregarAlCarrito } = useCarrito();
   const [cantidad, setCantidad] = createSignal(1);
-  const codigoLimpio = p.codigo.replace(/\D/g, "");
-  const handleAgregar = () => {
-   agregarAlCarrito({
-    id: p.id,
-    nombre: p.nombre,
-    precio: p.precio,
-    codigo: p.codigo,
-    imagen: p.imagen,
-    cantidad: cantidad(),
-    slug: p.slug,
-  });
-    mostrarToast("Producto agregado al carrito");
-    log("agregar_al_carrito_card", { id: p.id, nombre: p.nombre, cantidad: cantidad() });
+  const trackAction = useTrackAction();
+
+  const handleAgregar = async () => {
+    await trackAction(
+      "agregar_carrito_card",
+      {
+        productoId: p.id,
+        nombre: p.nombre,
+        cantidad: cantidad(),
+      },
+      () => {
+        agregarAlCarrito({
+          id: p.id,
+          nombre: p.nombre,
+          precio: p.precio,
+          codigo: p.codigo,
+          imagen: p.imagen,
+          cantidad: cantidad(),
+          slug: p.slug,
+        });
+        mostrarToast("Producto agregado al carrito");
+      }
+    );
   };
 
-  const handleClickProducto = () => {
-    log("click_producto_card", { id: p.id, nombre: p.nombre, slug: p.slug });
+  const handleClickProducto = async () => {
+    alert("asdf")
+    await trackAction("click_producto_card", {
+      productoId: p.id,
+      nombre: p.nombre,
+      slug: p.slug,
+    });
   };
 
   return (

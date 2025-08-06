@@ -1,11 +1,11 @@
-// ✅ Header.tsx
-import { Show, createSignal, createEffect } from "solid-js";
+import { Show, createSignal, createEffect, onMount } from "solid-js";
 import { Search, User, ShoppingBag } from "lucide-solid";
 import { useNavigate } from "@solidjs/router";
 import TextoPromoSlider from "@/components/common/TextoPromoSlider";
 import BuscadorOverlay from "@/components/common/BuscadorOverlay";
 import NavegacionDesktop from "@/components/layout/NavegacionDesktop";
 import { useCarrito, versionCarrito } from "@/store/carrito";
+import { obtenerClienteDeLocalStorage } from "@/utils/localStorage";
 
 export let promoRef: HTMLDivElement | undefined;
 export let headerRef: HTMLDivElement | undefined;
@@ -16,6 +16,12 @@ export default function Header(props: { onCart: () => void }) {
   const [buscarVisible, setBuscarVisible] = createSignal(false);
   const { carrito } = useCarrito();
   const [animarCarrito, setAnimarCarrito] = createSignal(false);
+  const [hayCliente, setHayCliente] = createSignal<boolean>(false);
+
+  onMount(() => {
+    // Chequea una vez al montar (ajustá si querés que escuche cambios)
+    setHayCliente(!!obtenerClienteDeLocalStorage());
+  });
 
   createEffect(() => {
     document.body.style.overflow = buscarVisible() ? "hidden" : "auto";
@@ -56,12 +62,14 @@ export default function Header(props: { onCart: () => void }) {
           </div>
 
           <div class="flex gap-4 items-center">
-            <button
-              onClick={() => navigate("/mis-pedidos")}
-              class="hidden md:block"
-            >
-              <User size={24} />
-            </button>
+            <Show when={hayCliente()}>
+              <button
+                onClick={() => navigate("/mis-pedidos")}
+                class="hidden md:block"
+              >
+                <User size={24} />
+              </button>
+            </Show>
             <button onClick={props.onCart} class="relative hidden md:block">
               <ShoppingBag size={24} class={animarCarrito() ? "animate-bounce" : ""} />
               <Show when={cantidadItems() > 0}>

@@ -8,7 +8,6 @@ interface HistorialClienteAttributes {
   clienteId: number;
   datosAntes: object;
   datosDespues: object;
-  ipId: number | null;
   origen: string;
   usuarioId: number | null;
   createdAt?: Date;
@@ -16,7 +15,7 @@ interface HistorialClienteAttributes {
   deletedAt?: Date;
 }
 
-type HistorialClienteCreationAttributes = Optional<HistorialClienteAttributes, 'id' | 'ipId' | 'usuarioId'>;
+type HistorialClienteCreationAttributes = Optional<HistorialClienteAttributes, 'id' | 'usuarioId'>;
 
 export class HistorialCliente extends Model<HistorialClienteAttributes, HistorialClienteCreationAttributes>
   implements HistorialClienteAttributes {
@@ -24,7 +23,6 @@ export class HistorialCliente extends Model<HistorialClienteAttributes, Historia
   public clienteId!: number;
   public datosAntes!: object;
   public datosDespues!: object;
-  public ipId!: number | null;
   public origen!: string;
   public usuarioId!: number | null;
 
@@ -50,10 +48,6 @@ export class HistorialCliente extends Model<HistorialClienteAttributes, Historia
       datosDespues: {
         type: DataTypes.JSON,
         allowNull: false
-      },
-      ipId: {
-        type: DataTypes.INTEGER,
-        allowNull: true
       },
       origen: {
         type: DataTypes.STRING,

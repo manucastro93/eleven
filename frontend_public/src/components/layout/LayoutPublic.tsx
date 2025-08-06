@@ -5,13 +5,13 @@ import SideCart from "../Carrito/CarritoDesplegable";
 import BottomNavbar from "./BottomNavbar";
 import Toast from "@/components/ui/Toast";
 import type { RouteSectionProps } from "@solidjs/router";
+import { useCarrito } from "@/store/carrito";
 
 export default function LayoutPublic(props: RouteSectionProps) {
-  // Estado para abrir/cerrar el carrito
-  const [carritoAbierto, setCarritoAbierto] = createSignal(false);
+  const { mostrarCarrito, setMostrarCarrito } = useCarrito();
 
-  const abrirCarrito = () => setCarritoAbierto(true);
-  const cerrarCarrito = () => setCarritoAbierto(false);
+  const abrirCarrito = () => setMostrarCarrito(true);
+  const cerrarCarrito = () => setMostrarCarrito(false);
 
   const abrirMenu = () => {
     // lógica para menú lateral si lo tenés (opcional)
@@ -22,12 +22,11 @@ export default function LayoutPublic(props: RouteSectionProps) {
     <div class="flex flex-col min-h-screen">
       <Header onMenu={abrirMenu} onCart={abrirCarrito} />
       <Toast />
-      <SideCart abierto={carritoAbierto()} onClose={cerrarCarrito} />
-
+      <SideCart abierto={mostrarCarrito()} onClose={cerrarCarrito} />
       <main class="flex-1">{props.children}</main>
-
       <Footer />
       <BottomNavbar onCart={abrirCarrito} />
     </div>
   );
 }
+

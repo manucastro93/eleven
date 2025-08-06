@@ -21,12 +21,13 @@ import localRoutes from './local.routes';
 import direccionRoutes from './direccion.routes';
 import estadisticasRoutes from './estadisticas.routes';
 import bannerRoutes from './banner.routes'
-import logSesionRoutes from './logSesion.routes';
 import publicRoutes from './public';
 import itemMenuRoutes from './itemMenu.routes';
 import whatsappRoutes from './whatsapp.routes';
 
 const router = Router();
+
+router.use('/public', publicRoutes);
 
 router.use('/clientes', clienteRoutes);
 router.use('/productos', productoRoutes);
@@ -49,8 +50,6 @@ router.use('/locales', localRoutes);
 router.use('/direcciones', direccionRoutes);
 router.use('/estadisticas', estadisticasRoutes);
 router.use('/banners', bannerRoutes);
-router.use(logSesionRoutes);
-router.use('/public', publicRoutes);
 router.use('/items-menu', itemMenuRoutes);
 router.use('/whatsapp', whatsappRoutes);
 

@@ -3,7 +3,7 @@ import { createEffect, createSignal } from "solid-js";
 import { useCarrito } from "@/store/carrito";
 import { formatearPrecio } from "@/utils/formato";
 
-export default function Header() {
+export default function HeaderDesktop() {
   const { carrito, setMostrarCarrito, total } = useCarrito();
   const [resaltado, setResaltado] = createSignal(false);
 

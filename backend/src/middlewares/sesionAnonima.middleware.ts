@@ -9,7 +9,6 @@ export const manejarSesionAnonima = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('✅ Middleware manejarSesionAnonima ejecutado');
 
   let sesionId = req.cookies.clienteAnonimoId;
 

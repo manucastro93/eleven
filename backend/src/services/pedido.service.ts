@@ -139,16 +139,16 @@ export async function crearPedido(pedidoData: any) {
       productosValidados.push({
         productoId: producto.id,
         cantidad,
-        observaciones: item.observaciones ?? ''
+        observaciones: item.observaciones ?? '',
+        precioUnitario: producto.precio
       });
     }
 
     const nuevoPedido = await models.Pedido.create({
       clienteId: clienteExistente.id,
-      metodoEnvioId,
-      metodoPagoId,
+      transporte,
+      formapago,
       observaciones,
-      ipId,
       estadoPedidoId: 1,     // por defecto "pendiente"
       estadoEdicion: false,
       total
@@ -246,3 +246,199 @@ export async function actualizarEstadoPedido(id: number, estado: number) {
     throw new Error("Error al actualizar el estado del pedido");
   }
 }
+
+export async function actualizarProductoPedido(
+  pedidoId: number,
+  productoId: number,
+  cantidad: number,
+  observaciones?: string
+) {
+  const t = await sequelize.transaction();
+  try {
+    // Traer el pedido y validar estado
+    const pedido = await models.Pedido.findByPk(pedidoId, { transaction: t });
+    if (!pedido) throw new Error('Pedido no encontrado');
+    if (pedido.estadoPedidoId !== 1) throw new Error('Solo se puede editar pedidos pendientes');
+
+    // Traer el producto real
+    const producto = await models.Producto.findByPk(productoId, { transaction: t });
+    if (!producto) throw new Error('Producto no encontrado');
+
+    // Validar stock suficiente
+    if (producto.stock < cantidad) {
+      throw new Error(`Stock insuficiente para "${producto.nombre}". Stock disponible: ${producto.stock}`);
+    }
+
+    // Validar precio actual (opcional: podrías actualizar el precio en PedidoProducto si tu lógica lo permite)
+    // Si no querés que cambie el precio, solo validá que el precio de PedidoProducto == producto.precio
+
+    // Actualizar detalle en PedidoProducto
+    const detalle = await models.PedidoProducto.findOne({
+      where: { pedidoId, productoId },
+      transaction: t
+    });
+    if (!detalle) throw new Error('Detalle de producto en el pedido no encontrado');
+
+    await detalle.update({ cantidad, observaciones: observaciones ?? '' }, { transaction: t });
+
+    // (Opcional) recalculá el total del pedido
+    await recalcularTotalPedido(pedidoId, t);
+
+    await t.commit();
+    return true;
+  } catch (error) {
+    await t.rollback();
+    throw error;
+  }
+}
+
+export async function agregarProductoAPedido(
+  pedidoId: number,
+  productoId: number,
+  cantidad: number,
+  observaciones?: string
+) {
+  const t = await sequelize.transaction();
+  try {
+    const pedido = await models.Pedido.findByPk(pedidoId, { transaction: t });
+    if (!pedido) throw new Error('Pedido no encontrado');
+    if (pedido.estadoPedidoId !== 1) throw new Error('Solo se puede editar pedidos pendientes');
+
+    const producto = await models.Producto.findByPk(productoId, { transaction: t });
+    if (!producto) throw new Error('Producto no encontrado');
+
+    if (producto.stock < cantidad) {
+      throw new Error(`Stock insuficiente para "${producto.nombre}". Stock disponible: ${producto.stock}`);
+    }
+
+    // Agregar nuevo detalle
+    await models.PedidoProducto.create({
+      pedidoId,
+      productoId,
+      cantidad,
+      precioUnitario: producto.precio,
+      observaciones: observaciones ?? ''
+    }, { transaction: t });
+
+    await recalcularTotalPedido(pedidoId, t);
+
+    await t.commit();
+    return true;
+  } catch (error) {
+    await t.rollback();
+    throw error;
+  }
+}
+
+export async function eliminarProductoDePedido(pedidoId: number, productoId: number) {
+  const t = await sequelize.transaction();
+  try {
+    const pedido = await models.Pedido.findByPk(pedidoId, { transaction: t });
+    if (!pedido) throw new Error('Pedido no encontrado');
+    if (pedido.estadoPedidoId !== 1) throw new Error('Solo se puede editar pedidos pendientes');
+
+    const detalle = await models.PedidoProducto.findOne({
+      where: { pedidoId, productoId },
+      transaction: t
+    });
+    if (!detalle) throw new Error('Detalle de producto no encontrado');
+
+    await detalle.destroy({ transaction: t });
+
+    await recalcularTotalPedido(pedidoId, t);
+
+    await t.commit();
+    return true;
+  } catch (error) {
+    await t.rollback();
+    throw error;
+  }
+}
+
+async function recalcularTotalPedido(pedidoId: number, transaction: any) {
+  const detalles = await models.PedidoProducto.findAll({
+    where: { pedidoId },
+    transaction
+  });
+
+  let total = 0;
+  for (const det of detalles) {
+    const producto = await models.Producto.findByPk(det.productoId, { transaction });
+    if (producto) {
+      total += Number(det.cantidad) * Number(producto.precio);
+    }
+  }
+  await models.Pedido.update({ total }, { where: { id: pedidoId }, transaction });
+}
+
+export async function duplicarPedidoACarrito(pedidoId: number, clienteId: number) {
+  const t = await sequelize.transaction();
+  try {
+    // 1. Traer pedido y detalles originales
+    const pedido = await models.Pedido.findByPk(pedidoId, { transaction: t });
+    if (!pedido) throw new Error('Pedido no encontrado');
+    const ipId = pedido.ipId;   // <== FIX: ahora ipId existe
+
+    const detalles = await models.PedidoProducto.findAll({
+      where: { pedidoId },
+      transaction: t
+    });
+    
+    // 2. Crear nuevo carrito
+    const nuevoCarrito = await models.Carrito.create({
+      clienteId,
+      total: 0,
+      estadoEdicion: 1
+    }, { transaction: t });
+
+    let total = 0;
+    const productosAgregados = [];
+    const productosSinStock = [];
+
+    for (const item of detalles) {
+      const producto = await models.Producto.findByPk(item.productoId, { transaction: t });
+      if (!producto) {
+        productosSinStock.push({
+          productoId: item.productoId,
+          motivo: 'Producto discontinuado o no encontrado'
+        });
+        continue;
+      }
+      if (producto.stock < item.cantidad) {
+        productosSinStock.push({
+          productoId: item.productoId,
+          motivo: `Stock insuficiente (${producto.stock} disponibles)`
+        });
+        continue;
+      }
+      // Ok, lo agregás al carrito con precio actualizado
+      await models.CarritoProducto.create({
+        carritoId: nuevoCarrito.id,
+        productoId: producto.id,
+        cantidad: item.cantidad,
+        precioUnitario: producto.precio
+      }, { transaction: t });
+      productosAgregados.push({
+        productoId: producto.id,
+        cantidad: item.cantidad,
+        precioUnitario: producto.precio
+      });
+      total += Number(item.cantidad) * Number(producto.precio);
+    }
+
+    // Actualizás total del carrito
+    await nuevoCarrito.update({ total }, { transaction: t });
+
+    await t.commit();
+
+    return {
+      carritoId: nuevoCarrito.id,
+      productosAgregados,
+      productosSinStock
+    };
+  } catch (error) {
+    await t.rollback();
+    throw error;
+  }
+}
+

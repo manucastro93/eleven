@@ -2,6 +2,7 @@ import { For, Show } from "solid-js";
 import { A } from "@solidjs/router";
 import { useCarrito } from "@/store/carrito";
 import { formatearPrecio } from "@/utils/formato";
+import { actualizarObservacionesGeneralEnCarrito } from "@/services/carrito.service"
 
 export default function PasoResumen(props: { onSiguiente: () => void }) {
   const {
@@ -10,25 +11,48 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
     total,
     quitarDelCarrito,
     setPasoCarrito,
-    comentarioGeneral,
-    setComentarioGeneral,
+    observacionesGeneral,
+    setObservacionesGeneral,
+    actualizarCantidadEnCarrito,
+    actualizarObservacionesEnCarrito
   } = useCarrito();
 
-  const actualizarComentarioItem = (id: number, comentario: string) => {
+const actualizarObservacionesItem = async (id: number, cantidad: number, observaciones: string) => {
+  try {
+    await actualizarObservacionesEnCarrito(id, cantidad, observaciones);
     const actualizados = carrito().map((item) =>
-      item.id === id ? { ...item, comentario } : item
+      item.id === id ? { ...item, observaciones } : item
     );
     setCarrito(actualizados);
-    localStorage.setItem("carrito", JSON.stringify(actualizados));
-  };
+  } catch (error) {
+    console.error("Error actualizando observaciones en backend:", error);
+  }
+};
 
-  const actualizarCantidadItem = (id: number, cantidad: number) => {
+const actualizarCantidadItem = async (id: number, cantidad: number, observaciones: string) => {
+  try {
+    await actualizarCantidadEnCarrito(id, cantidad, observaciones);
     const actualizados = carrito().map((item) =>
       item.id === id ? { ...item, cantidad } : item
     );
     setCarrito(actualizados);
-    localStorage.setItem("carrito", JSON.stringify(actualizados));
-  };
+  } catch (error) {
+    console.error("Error actualizando cantidad en backend:", error);
+  }
+};
+
+const actualizarObservacionGeneral = async (observaciones: string) => {
+  setObservacionesGeneral(observaciones);
+
+  const carritoId = localStorage.getItem("carritoId");
+  if (carritoId) {
+    try {
+      await actualizarObservacionesGeneralEnCarrito(Number(carritoId), observaciones);
+    } catch (err) {
+      console.error("Error actualizando observaciones general en backend:", err);
+    }
+  }
+};
 
   return (
     <Show when={carrito().length > 0} fallback={<p class="p-5 text-sm text-gray-500">El carrito está vacío.</p>}>
@@ -73,7 +97,7 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
                         type="button"
                         class="px-3 hover:bg-gray-100"
                         onClick={() =>
-                          actualizarCantidadItem(item.id, Math.max(1, item.cantidad - 1))
+                          actualizarCantidadItem(item.id, Math.max(1, item.cantidad - 1),item.observaciones || "")
                         }
                       >
                         −
@@ -85,13 +109,13 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
                         value={item.cantidad}
                         onInput={(e) => {
                           const cantidad = Math.max(1, Number(e.currentTarget.value));
-                          actualizarCantidadItem(item.id, cantidad);
+                          actualizarCantidadItem(item.id, cantidad, "");
                         }}
                       />
                       <button
                         type="button"
                         class="px-3 hover:bg-gray-100"
-                        onClick={() => actualizarCantidadItem(item.id, item.cantidad + 1)}
+                        onClick={() => actualizarCantidadItem(item.id, item.cantidad + 1, item.observaciones || "")}
                       >
                         +
                       </button>
@@ -105,13 +129,13 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
                     </span>
                   </div>
 
-                  {/* Comentario */}
+                  {/* observaciones */}
                   <input
                     type="text"
-                    placeholder="Comentario sobre este producto"
-                    value={item.comentario || ""}
-                    onInput={(e) => (item.comentario = e.currentTarget.value)}
-                    onBlur={(e) => actualizarComentarioItem(item.id, e.currentTarget.value)}
+                    placeholder="observaciones sobre este producto"
+                    value={item.observaciones || ""}
+                    onInput={(e) => (item.observaciones = e.currentTarget.value)}
+                    onBlur={(e) => actualizarObservacionesItem(item.id, item.cantidad, e.currentTarget.value)}
                     class="w-full px-3 py-2 rounded border border-gray-300 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:[#979797] transition-shadow"
                   />
                 </div>
@@ -119,11 +143,14 @@ export default function PasoResumen(props: { onSiguiente: () => void }) {
             )}
           </For>
 
-          {/* Comentario general */}
+          {/* observaciones general */}
           <textarea
-            placeholder="Comentario general del pedido (opcional)"
-            value={comentarioGeneral()}
-            onInput={(e) => setComentarioGeneral(e.currentTarget.value)}
+            placeholder="observaciones general del pedido (opcional)"
+            value={observacionesGeneral()}
+            onInput={(e) => setObservacionesGeneral(e.currentTarget.value)} // solo local
+            onBlur={async (e) => {
+              await actualizarObservacionGeneral(e.currentTarget.value); // sync backend SOLO al salir
+            }}
             class="w-full px-3 py-2 rounded border border-gray-300 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:[#979797] transition-shadow resize-none"
             rows={2}
           />

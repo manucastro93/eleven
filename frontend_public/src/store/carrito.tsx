@@ -1,11 +1,20 @@
-// ✅ store/carrito.ts
 import {
   createContext,
   useContext,
   createSignal,
   createEffect,
   type JSX,
+  observable,
 } from 'solid-js';
+import { asegurarSesionAnonima } from "@/utils/sesionAnonima";
+import {
+  getCarritoActivoPorSesion,
+  crearCarrito,
+  agregarProductoACarrito,
+  eliminarProductoDeCarrito,
+  actualizarCantidadProductoCarrito,
+} from "@/services/carrito.service";
+import { actualizarObservacionesEnCarrito as apiActualizarObservaciones } from "@/services/carrito.service";
 
 export type ItemCarrito = {
   id: number;
@@ -14,7 +23,7 @@ export type ItemCarrito = {
   precio: number;
   cantidad: number;
   imagen?: string;
-  comentario?: string;
+  observaciones?: string;
   slug: string;
 };
 
@@ -29,13 +38,32 @@ type CarritoContextType = {
   setMostrarCarrito: (v: boolean) => void;
   pasoCarrito: () => 1 | 2;
   setPasoCarrito: (v: 1 | 2) => void;
-  comentarioGeneral: () => string;
-  setComentarioGeneral: (v: string) => void;
+  observacionesGeneral: () => string;
+  setObservacionesGeneral: (v: string) => void;
+  actualizarCantidadEnCarrito: (productoId: number, cantidad: number, observaciones?: string) => Promise<void>;
+  actualizarObservacionesEnCarrito: (productoId: number, cantidad: number, observaciones: string) => Promise<void>;
 };
 
 const CarritoContext = createContext<CarritoContextType>();
 
 const [versionCarrito, setVersionCarrito] = createSignal(0);
+
+async function asegurarCarritoBackend(): Promise<number> {
+  const sesionAnonimaId = await asegurarSesionAnonima();
+  let carrito = null;
+  try {
+    carrito = await getCarritoActivoPorSesion(sesionAnonimaId);
+  } catch (_) {}
+  if (!carrito) {
+    carrito = await crearCarrito({
+      sesionAnonimaId,
+      total: 0,
+      estadoEdicion: 1
+    });
+  }
+  localStorage.setItem("carritoId", String(carrito.id));
+  return carrito.id;
+}
 
 export function CarritoProvider(props: { children: JSX.Element }) {
   const stored = localStorage.getItem('carrito');
@@ -43,9 +71,9 @@ export function CarritoProvider(props: { children: JSX.Element }) {
     stored ? JSON.parse(stored) : []
   );
 
-  const storedComentario = localStorage.getItem('comentarioGeneral');
-  const [comentarioGeneral, setComentarioGeneral] = createSignal(
-    storedComentario || ''
+  const storedObservaciones = localStorage.getItem('observacionesGeneral');
+  const [observacionesGeneral, setObservacionesGeneral] = createSignal(
+    storedObservaciones || ''
   );
 
   const [mostrarCarrito, setMostrarCarrito] = createSignal(false);
@@ -56,10 +84,10 @@ export function CarritoProvider(props: { children: JSX.Element }) {
   });
 
   createEffect(() => {
-    localStorage.setItem('comentarioGeneral', comentarioGeneral());
+    localStorage.setItem('observacionesGeneral', observacionesGeneral());
   });
 
-  const agregarAlCarrito = (item: ItemCarrito) => {
+  const agregarAlCarrito = async (item: ItemCarrito) => {
     setCarritoRaw(prev => {
       const existente = prev.find(p => p.id === item.id);
       const actualizado = existente
@@ -73,14 +101,67 @@ export function CarritoProvider(props: { children: JSX.Element }) {
     });
     setPasoCarrito(1);
     setVersionCarrito(v => v + 1);
+
+    try {
+      const carritoId = await asegurarCarritoBackend();
+      await agregarProductoACarrito({
+        carritoId,
+        productoId: item.id,
+        cantidad: item.cantidad,
+        precioUnitario: item.precio,
+        observaciones: item.observaciones ? item.observaciones : undefined,
+      });
+    } catch (err) {
+      console.error("No se pudo sincronizar el carrito backend:", err);
+    }
   };
 
-  const quitarDelCarrito = (id: number) => {
+  const actualizarCantidadEnCarrito = async (productoId: number, cantidad: number, observaciones?: string) => {
+    setCarritoRaw(prev => {
+      const actualizado = prev.map(p =>
+        p.id === productoId ? { ...p, cantidad } : p
+      );
+      setVersionCarrito(v => v + 1);
+      return actualizado;
+    });
+
+    const carritoId = localStorage.getItem("carritoId");
+    if (carritoId) {
+      try {
+        await actualizarCantidadProductoCarrito(Number(carritoId), productoId, cantidad, observaciones || "");
+      } catch (err) {
+        console.error("Error actualizando cantidad en backend:", err);
+      }
+    }
+  };
+
+  const quitarDelCarrito = async (id: number) => {
     setCarritoRaw(prev => {
       const actualizado = prev.filter(p => p.id !== id);
       setVersionCarrito(v => v + 1);
       return actualizado;
     });
+
+    const carritoId = localStorage.getItem("carritoId");
+    if (carritoId) {
+      try {
+        await eliminarProductoDeCarrito(Number(carritoId), id);
+      } catch (err) {
+        console.error("No se pudo eliminar el producto del carrito backend:", err);
+      }
+    }
+  };
+
+  const actualizarObservacionesEnCarrito = async (productoId: number, cantidad: number, observaciones: string) => {
+    const carritoIdStr = localStorage.getItem("carritoId");
+    if (!carritoIdStr) return;
+
+    const carritoId = Number(carritoIdStr);
+    try {
+      await apiActualizarObservaciones(carritoId, productoId, cantidad, observaciones);
+    } catch (error) {
+      console.error("Error actualizando observaciones en backend:", error);
+    }
   };
 
   const vaciarCarrito = () => {
@@ -109,8 +190,10 @@ export function CarritoProvider(props: { children: JSX.Element }) {
         setMostrarCarrito,
         pasoCarrito,
         setPasoCarrito,
-        comentarioGeneral,
-        setComentarioGeneral,
+        observacionesGeneral,
+        setObservacionesGeneral,
+        actualizarCantidadEnCarrito,
+        actualizarObservacionesEnCarrito
       }}
     >
       {props.children}

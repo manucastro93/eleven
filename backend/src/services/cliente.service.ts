@@ -58,6 +58,7 @@ export async function actualizarClienteDesdeAdmin(id: number, data: any) {
 }
 
 export async function crearClienteDesdeFormulario(data: {
+  clienteDuxId?: number;
   nombre: string;
   email: string;
   telefono?: string;
@@ -66,8 +67,11 @@ export async function crearClienteDesdeFormulario(data: {
   direccion: string;
   localidad: string;
   provincia: string;
+  categoriaFiscal?: string;
+  codigoPostal?: string;
 }) {
   const {
+    clienteDuxId,
     nombre,
     email,
     telefono,
@@ -76,35 +80,20 @@ export async function crearClienteDesdeFormulario(data: {
     direccion,
     localidad,
     provincia,
+    categoriaFiscal,
+    codigoPostal,
   } = data;
-
-  if (
-    !nombre ||
-    !email ||
-    !cuitOCuil ||
-    !direccion ||
-    !localidad ||
-    !provincia
-  ) {
-    throw new Error("Faltan datos obligatorios del cliente");
-  }
 
   const existente = await models.Cliente.findOne({ where: { cuitOCuil } });
 
   if (existente) {
-    await existente.update({
-      nombre,
-      email,
-      telefono,
-      razonSocial,
-      direccion,
-      localidad,
-      provincia,
-    });
+    // NO actualizar, simplemente devolvé el cliente existente:
     return existente;
   }
 
+  // Si no existe, crealo usando el ID de Dux si vino
   return models.Cliente.create({
+    clienteDuxId,
     nombre,
     email,
     telefono: telefono ?? "",
@@ -113,6 +102,8 @@ export async function crearClienteDesdeFormulario(data: {
     direccion,
     localidad,
     provincia,
+    categoriaFiscal: categoriaFiscal ?? "",
+    codigoPostal: codigoPostal ?? ""
   });
 }
 

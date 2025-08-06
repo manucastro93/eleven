@@ -2,8 +2,8 @@ import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 
 interface CarritoAttributes {
   id: number;
-  clienteId: number;
-  ipId: number;
+  clienteId: number | null;
+  sesionAnonimaId: string | null;
   total: number;
   observaciones?: string;
   estadoEdicion: number;
@@ -17,7 +17,7 @@ type CarritoCreationAttributes = Optional<CarritoAttributes, 'id' | 'observacion
 export class Carrito extends Model<CarritoAttributes, CarritoCreationAttributes> implements CarritoAttributes {
   public id!: number;
   public clienteId!: number;
-  public ipId!: number;
+  public sesionAnonimaId!: string | null;
   public total!: number;
   public observaciones?: string;
   public estadoEdicion!: number;
@@ -34,11 +34,11 @@ export class Carrito extends Model<CarritoAttributes, CarritoCreationAttributes>
       },
       clienteId: {
         type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: false
+        allowNull: true
       },
-      ipId: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: false
+      sesionAnonimaId: {
+        type: DataTypes.UUID,
+        allowNull: true
       },
       total: {
         type: DataTypes.DECIMAL(10, 2),

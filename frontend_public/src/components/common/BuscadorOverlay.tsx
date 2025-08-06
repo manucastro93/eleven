@@ -4,25 +4,19 @@ import { useNavigate } from "@solidjs/router";
 import { listarProductos } from "@/services/producto.service";
 import type { Producto } from "@/types/producto.type";
 import { formatearPrecio } from "@/utils/formato";
-import { ImagenConExtensiones } from "../shared/ImagenConExtensiones";
+import { useLogSesion } from "@/hooks/useLogSesion";
 
 export default function BuscadorOverlay(props: { onClose: () => void }) {
   const navigate = useNavigate();
   const [texto, setTexto] = createSignal("");
   const [busqueda, setBusqueda] = createSignal("");
-
-  // 🔁 DEBUG: ver cada cambio de texto
-  createEffect(() => {
-    console.log("📝 texto() cambió:", texto());
-  });
+  const logSesion = useLogSesion();
 
   // 🔁 Debounce: espera 300ms desde que se deja de tipear
   createEffect(() => {
     const t = texto().trim();
-    console.log("⏳ Debounce preparando búsqueda:", t);
     const timeout = setTimeout(() => {
       if (t.length === 0) return;
-      console.log("🚀 setBusqueda:", t);
       setBusqueda(t);
     }, 300);
     return () => clearTimeout(timeout);
@@ -72,9 +66,16 @@ export default function BuscadorOverlay(props: { onClose: () => void }) {
               {(p: Producto) => (
                 <li
                   class="flex gap-3 cursor-pointer hover:bg-gray-100 p-3 border-b last:border-b-0"
-                  onClick={() => {
+                  onClick={async () => {
+                    await logSesion("click_resultado_busqueda", {
+                      productoId: p.id,
+                      nombre: p.nombre,
+                      slug: p.slug,
+                      query: texto().trim(),
+                      origen: "buscador_overlay"
+                    });
                     navigate(`/productos/detalle/${p.slug}`);
-                    props.onClose(); // ✅ cerrar overlay
+                    props.onClose();
                   }}
                 >
                   <img
@@ -100,6 +101,7 @@ export default function BuscadorOverlay(props: { onClose: () => void }) {
             <button
               class="w-full border border-black rounded py-3 text-sm font-medium tracking-wide uppercase hover:bg-black hover:text-white transition"
               onClick={() => {
+                logSesion("ver_todos_resultados_busqueda", { query: texto().trim() });
                 navigate(`/categoria/todos?busqueda=${encodeURIComponent(texto())}`);
                 props.onClose();
               }}

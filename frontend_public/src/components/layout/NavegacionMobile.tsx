@@ -2,6 +2,7 @@ import { createResource, For, Show } from "solid-js";
 import { listarCategorias } from "@/services/categoria.service";
 import { listarItemsMenu } from "@/services/itemMenu.service";
 import { A } from "@solidjs/router";
+import { useLogSesion } from "@/hooks/useLogSesion";
 
 export default function NavegacionMobile(props: {
   abierto: boolean;
@@ -9,6 +10,7 @@ export default function NavegacionMobile(props: {
 }) {
   const [categorias] = createResource(listarCategorias);
   const [itemsMenu] = createResource(listarItemsMenu);
+  const logSesion = useLogSesion();
 
   return (
     <Show when={props.abierto}>
@@ -31,10 +33,19 @@ export default function NavegacionMobile(props: {
                   <A
                     href={`/categoria/${cat.slug}`}
                     class="block py-2 px-4 rounded hover:bg-acento/20 font-medium text-gray-800"
-                    onClick={props.onClose}
+                    onClick={() => {
+                      logSesion("click_categoria_menu_mobile", {
+                        categoriaId: cat.id,
+                        categoria: cat.nombre,
+                        slug: cat.slug,
+                        origen: "menu_mobile"
+                      });
+                      props.onClose();
+                    }}
                   >
                     {cat.nombre}
                   </A>
+
                 </li>
               )}
             </For>
@@ -46,14 +57,23 @@ export default function NavegacionMobile(props: {
                 const slug = item.slug.toLowerCase();
                 const ruta =
                   slug === "info" ? "/info"
-                  : slug === "nosotros" ? "/nosotros"
-                  : `/item/${item.slug}`;
+                    : slug === "nosotros" ? "/nosotros"
+                      : `/item/${item.slug}`;
                 return (
                   <li>
                     <A
                       href={ruta}
                       class="block py-2 px-4 rounded hover:bg-acento/20 text-gray-700"
-                      onClick={props.onClose}
+                      onClick={() => {
+                        logSesion("click_menu_mobile", {
+                          itemMenuId: item.id,
+                          nombre: item.nombre,
+                          slug: item.slug,
+                          ruta,
+                          origen: "menu_mobile"
+                        });
+                        props.onClose();
+                      }}
                     >
                       {item.nombre}
                     </A>

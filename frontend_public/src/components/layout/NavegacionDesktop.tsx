@@ -5,12 +5,14 @@ import type { Categoria } from "@/types/categoria.type";
 import { headerRef, navRef, promoRef } from "./Header";
 import { listarItemsMenu } from "@/services/itemMenu.service";
 import type { ItemMenu } from "@/types/itemMenu.type";
+import { useLogSesion } from "@/hooks/useLogSesion";
 
 export default function NavegacionDesktop(props: { refNav?: (el: HTMLDivElement) => void }) {
   const [hovered, setHovered] = createSignal(false);
   const [categorias] = createResource<Categoria[]>(listarCategorias);
   const [offsetTop, setOffsetTop] = createSignal(0);
   const [itemsMenu] = createResource<ItemMenu[]>(listarItemsMenu);
+  const logSesion = useLogSesion();
 
   const calcularOffset = () => {
     const promo = promoRef?.offsetHeight || 0;
@@ -74,7 +76,15 @@ export default function NavegacionDesktop(props: { refNav?: (el: HTMLDivElement)
                               <A
                                 href={`/categoria/${cat.slug}`}
                                 class="block hover:text-acento font-medium"
-                                onClick={() => setHovered(false)}
+                                onClick={() => {
+                                  logSesion("click_categoria_menu_superior", {
+                                    categoriaId: cat.id,
+                                    categoria: cat.nombre,
+                                    slug: cat.slug,
+                                    origen: "menu_superior"
+                                  });
+                                  setHovered(false);
+                                }}
                               >
                                 {cat.nombre}
                               </A>
@@ -102,7 +112,19 @@ export default function NavegacionDesktop(props: { refNav?: (el: HTMLDivElement)
 
               return (
                 <li>
-                  <A href={ruta} class="hover:text-acento font-medium px-2">
+                  <A
+                    href={ruta}
+                    class="hover:text-acento font-medium px-2"
+                    onClick={() => {
+                      logSesion("click_menu_superior", {
+                        itemMenuId: item.id,
+                        nombre: item.nombre,
+                        slug: item.slug,
+                        ruta,
+                        origen: "menu_superior"
+                      });
+                    }}
+                  >
                     {item.nombre}
                   </A>
                 </li>

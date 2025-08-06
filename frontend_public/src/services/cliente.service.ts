@@ -1,7 +1,7 @@
 import api from './api';
 import type { ClienteFormulario, Cliente } from '@/types/cliente.type';
 
-export async function crearCliente(data: ClienteFormulario): Promise<Cliente> {
+export async function crearCliente(data: Cliente): Promise<Cliente> {
   const response = await api.post('/clientes', data);
   return response.data;
 }

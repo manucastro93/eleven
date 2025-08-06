@@ -59,8 +59,6 @@ export const getPedidosClientePorIP = async (req: Request, res: Response): Promi
   }
 };
 
-
-
 export const getPedidosPorClienteId = async (req: Request, res: Response): Promise<void> => {
   try {
     const { clienteId } = req.params;
@@ -83,16 +81,18 @@ export const getPedidosPorClienteId = async (req: Request, res: Response): Promi
 export const getPedidoPorId = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const pedidoId = Number(id); // Convertir id a número
+    const pedidoId = Number(id);
     if (isNaN(pedidoId)) {
       res.status(400).json({ message: 'ID de pedido no válido' });
+      return;
     }
 
     const pedido = await pedidoService.obtenerPedidoPorId(pedidoId);
     if (!pedido) {
       res.status(404).json({ message: 'Pedido no encontrado' });
+      return;
     }
-    res.status(200).json(pedido);  // No retornamos res, solo lo usamos
+    res.status(200).json(pedido);
   } catch (error: unknown) {
     if (error instanceof Error) {
       res.status(500).json({ message: error.message });
@@ -158,5 +158,122 @@ export const putEstadoPedido = async (req: Request, res: Response): Promise<void
     } else {
       res.status(500).json({ message: 'Error desconocido' });
     }
+  }
+};
+
+export const actualizarProductoPedido = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const pedidoId = Number(req.params.pedidoId);
+    const productoId = Number(req.params.productoId);
+    const { cantidad, observaciones } = req.body;
+
+    if (!cantidad || cantidad < 1) {
+      res.status(400).json({ message: 'La cantidad debe ser mayor a cero' });
+      return;
+    }
+
+    // 1. Chequear existencia y estado
+    const pedido = await pedidoService.obtenerPedidoPorId(pedidoId);
+    if (!pedido) {
+      res.status(404).json({ message: 'Pedido no encontrado' });
+      return;
+    }
+    if (pedido.estadoPedidoId !== 1) { // 1 = pendiente (ajustá el valor según tu sistema)
+      res.status(409).json({ message: 'No se puede editar un pedido que ya está en proceso o entregado' });
+      return;
+    }
+
+    // 2. Actualizar producto, validando stock/precio
+    await pedidoService.actualizarProductoPedido(pedidoId, productoId, cantidad, observaciones);
+
+    res.status(200).json({ message: 'Producto del pedido actualizado' });
+  } catch (error: any) {
+    const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+    if (mensaje.includes('Stock insuficiente') || mensaje.includes('Producto no encontrado') || mensaje.includes('precio')) {
+      res.status(409).json({ message: mensaje });
+    } else {
+      res.status(500).json({ message: mensaje });
+    }
+  }
+};
+
+export const agregarProductoAPedido = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const pedidoId = Number(req.params.pedidoId);
+    const { productoId, cantidad, observaciones } = req.body;
+
+    if (!productoId || !cantidad || cantidad < 1) {
+      res.status(400).json({ message: 'Faltan datos obligatorios: productoId y cantidad' });
+      return;
+    }
+
+    const pedido = await pedidoService.obtenerPedidoPorId(pedidoId);
+    if (!pedido) {
+      res.status(404).json({ message: 'Pedido no encontrado' });
+      return;
+    }
+    if (pedido.estadoPedidoId !== 1) {
+      res.status(409).json({ message: 'No se puede editar un pedido que ya está en proceso o entregado' });
+      return;
+    }
+
+    await pedidoService.agregarProductoAPedido(pedidoId, productoId, cantidad, observaciones);
+
+    res.status(200).json({ message: 'Producto agregado al pedido' });
+  } catch (error: any) {
+    const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+    if (mensaje.includes('Stock insuficiente') || mensaje.includes('Producto no encontrado') || mensaje.includes('precio')) {
+      res.status(409).json({ message: mensaje });
+    } else {
+      res.status(500).json({ message: mensaje });
+    }
+  }
+};
+
+export const eliminarProductoDePedido = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const pedidoId = Number(req.params.pedidoId);
+    const productoId = Number(req.params.productoId);
+
+    const pedido = await pedidoService.obtenerPedidoPorId(pedidoId);
+    if (!pedido) {
+      res.status(404).json({ message: 'Pedido no encontrado' });
+      return;
+    }
+    if (pedido.estadoPedidoId !== 1) {
+      res.status(409).json({ message: 'No se puede editar un pedido que ya está en proceso o entregado' });
+      return;
+    }
+
+    await pedidoService.eliminarProductoDePedido(pedidoId, productoId);
+
+    res.status(200).json({ message: 'Producto eliminado del pedido' });
+  } catch (error: any) {
+    const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+    if (mensaje.includes('Producto no encontrado')) {
+      res.status(404).json({ message: mensaje });
+    } else {
+      res.status(500).json({ message: mensaje });
+    }
+  }
+};
+
+export const duplicarPedidoACarrito = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const pedidoId = Number(req.params.pedidoId);
+    // Recuperá el clienteId desde el body o mejor, del token si usás auth
+    const { clienteId } = req.body;
+    if (!clienteId) {
+      res.status(400).json({ message: 'Falta el clienteId para duplicar el pedido' });
+      return;
+    }
+
+    const resultado = await pedidoService.duplicarPedidoACarrito(pedidoId, clienteId);
+
+    // resultado puede tener un formato tipo:
+    // { carritoId, productosAgregados, productosSinStock: [{ productoId, motivo }] }
+    res.status(201).json(resultado);
+  } catch (error: any) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Error desconocido' });
   }
 };

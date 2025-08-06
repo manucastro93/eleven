@@ -1,5 +1,5 @@
 import { Component, onMount, createEffect } from "solid-js";
-import ProductoCard from "@/components/ProductoCard";
+//import ProductoCard from "@/components/ProductoCard";
 import { initSwiper } from "@/utils/initSwiper";
 import { useCarrito } from "@/store/carrito";
 import Swiper from "swiper";
@@ -54,7 +54,7 @@ const SliderProductos: Component<Props> = ({
               }`}
             >
               <div class="w-[75vw] sm:w-[200px] md:w-[230px]">
-                <ProductoCard {...prod} />
+                {/*<ProductoCard {...prod} />*/}
               </div>
             </div>
           ))}
