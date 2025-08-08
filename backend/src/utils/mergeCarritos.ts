@@ -8,12 +8,12 @@ export async function mergearCarritosClienteYAnonimo(clienteId: number, sesionAn
   try {
     // 1. Traer ambos carritos activos
     const carritoCliente = await Carrito.findOne({
-      where: { clienteId, estadoEdicion: 1 },
+      where: { clienteId },
       transaction: t
     });
 
     const carritoAnonimo = await Carrito.findOne({
-      where: { sesionAnonimaId, clienteId: { [Op.is]: null }, estadoEdicion: 1 },
+      where: { sesionAnonimaId, clienteId: { [Op.is]: null } },
       transaction: t
     });
 

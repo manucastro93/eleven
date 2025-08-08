@@ -8,6 +8,7 @@ interface PedidoAttributes {
   total: number;
   observaciones?: string | null;
   estadoEdicion: boolean;
+  fechaEdicion?: Date | null;
   formaEnvio: string;
   transporte?: string;
   formaPago: string;
@@ -39,6 +40,7 @@ export class Pedido
   public total!: number;
   public observaciones?: string | null;
   public estadoEdicion!: boolean;
+  public fechaEdicion?: Date | null;
   public formaEnvio!: string;
   public transporte?: string;
   public formaPago!: string;
@@ -85,6 +87,10 @@ export class Pedido
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true,
+        },
+        fechaEdicion: {
+          type: DataTypes.DATE,
+          allowNull: true,
         },
         transporte: {
           type: DataTypes.STRING(100),

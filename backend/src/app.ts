@@ -54,7 +54,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // ✅ Middleware para identificar usuarios anónimos (si aplica)
-app.use(manejarSesionAnonima);
+//app.use(manejarSesionAnonima);
 
 // ✅ Parsers de body para JSON y formularios SOLO para /api
 app.use('/api', express.json({ limit: '10mb', type: ['application/json'] }));

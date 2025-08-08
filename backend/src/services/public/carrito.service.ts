@@ -1,6 +1,6 @@
-import { models } from '@/config/db';
-import { sequelize } from '@/config/db';
-import { Op } from 'sequelize';
+import { models } from "@/config/db";
+import { sequelize } from "@/config/db";
+import { Op } from "sequelize";
 
 interface FiltrosCarrito {
   clienteId?: number;
@@ -11,15 +11,26 @@ interface FiltrosCarrito {
   offset?: number;
 }
 
+async function actualizarTotalCarrito(carritoId: number) {
+  const productos = await models.CarritoProducto.findAll({
+    where: { carritoId },
+  });
+  const total = productos.reduce(
+    (acc, item) => acc + Number(item.cantidad) * Number(item.precioUnitario),
+    0
+  );
+  await models.Carrito.update({ total }, { where: { id: carritoId } });
+}
+
 export async function listarCarritos({
   clienteId,
-  estadoEdicion = 1,
+  estadoEdicion = 0,
   desde,
   hasta,
   limit = 20,
-  offset = 0
+  offset = 0,
 }: FiltrosCarrito) {
-  const where: any = { estadoEdicion };
+  const where: any = {};
 
   if (clienteId) where.clienteId = clienteId;
 
@@ -27,12 +38,17 @@ export async function listarCarritos({
     const desdeDate = desde ? new Date(desde) : undefined;
     const hastaDate = hasta ? new Date(hasta) : undefined;
 
-    if ((desdeDate && isNaN(desdeDate.getTime())) || (hastaDate && isNaN(hastaDate.getTime()))) {
-      throw new Error('Las fechas ingresadas no son válidas.');
+    if (
+      (desdeDate && isNaN(desdeDate.getTime())) ||
+      (hastaDate && isNaN(hastaDate.getTime()))
+    ) {
+      throw new Error("Las fechas ingresadas no son válidas.");
     }
 
     if (desdeDate && hastaDate && desdeDate > hastaDate) {
-      throw new Error('La fecha "desde" no puede ser posterior a la fecha "hasta".');
+      throw new Error(
+        'La fecha "desde" no puede ser posterior a la fecha "hasta".'
+      );
     }
 
     where.createdAt = {};
@@ -43,57 +59,149 @@ export async function listarCarritos({
   const { rows, count } = await models.Carrito.findAndCountAll({
     where,
     include: [
-      { model: models.Cliente, as: 'cliente' },
-      { model: models.IP, as: 'ip' },
+      { model: models.Cliente, as: "cliente" },
+      { model: models.IP, as: "ip" },
       {
         model: models.Producto,
-        as: 'productos',
-        through: { attributes: ['cantidad', 'precioUnitario'] }
-      }
+        as: "productos",
+        through: { attributes: ["cantidad", "precioUnitario"] },
+      },
     ],
     limit,
     offset,
-    order: [['createdAt', 'DESC']]
+    order: [["createdAt", "DESC"]],
   });
 
   return { carritos: rows, total: count };
 }
 
 export async function obtenerCarritoActivoPorSesion(sesionAnonimaId: string) {
-  return models.Carrito.findOne({
-    where: {
-      sesionAnonimaId,
-      estadoEdicion: 1,
-    }
+  const carrito = await models.Carrito.findOne({
+    where: { sesionAnonimaId },
+    include: [
+      {
+        model: models.CarritoProducto,
+        as: "items",
+        include: [
+          {
+            model: models.Producto,
+            as: "producto",
+            attributes: ["id", "nombre", "codigo", "precio", "imagen", "slug"],
+          },
+        ],
+      },
+    ],
   });
+
+  if (!carrito) return null;
+
+  // Si TS se queja por 'items', castealo o agregá el tipo correcto
+  //const items = (carrito as any).items || [];
+  //casteado:
+  const items = ((carrito as { items?: any[] })?.items) ?? [];
+
+  return {
+    id: carrito.id,
+    clienteId: carrito.clienteId,
+    sesionAnonimaId: carrito.sesionAnonimaId,
+    total: carrito.total,
+    observaciones: carrito.observaciones,
+    estadoEdicion: carrito.estadoEdicion,
+    fechaEdicion: carrito.fechaEdicion,
+    createdAt: carrito.createdAt,
+    updatedAt: carrito.updatedAt,
+    deletedAt: carrito.deletedAt,
+    items: items.map((item: any) => ({
+      id: item.id,
+      carritoId: item.carritoId,
+      productoId: item.productoId,
+      cantidad: item.cantidad,
+      precioUnitario: item.precioUnitario,
+      observaciones: item.observaciones,
+      producto: item.producto
+        ? {
+            id: item.producto.id,
+            nombre: item.producto.nombre,
+            codigo: item.producto.codigo,
+            precio: item.producto.precio,
+            imagen: item.producto.imagen,
+            slug: item.producto.slug,
+          }
+        : null,
+    })),
+  };
 }
 
 export async function obtenerCarritoActivo(clienteId: number) {
   const carrito = await models.Carrito.findOne({
-    where: { clienteId, estadoEdicion: 1 },
+    where: { clienteId },
     include: [
-      { model: models.Producto, as: 'productos', through: { attributes: ['cantidad', 'precioUnitario', 'observaciones'] } }
-    ]
+      {
+        model: models.CarritoProducto,
+        as: "items",
+        include: [
+          {
+            model: models.Producto,
+            as: "producto",
+            attributes: ["id", "nombre", "codigo", "precio", "imagen", "slug"],
+          },
+        ],
+      },
+    ],
   });
+  if (!carrito) return null;
 
-  return carrito;
+  // Uniformizá el formato de respuesta (igual que por sesión)
+  const items = ((carrito as { items?: any[] })?.items) ?? [];
+
+  return {
+    id: carrito.id,
+    pedidoId: carrito.pedidoId,
+    clienteId: carrito.clienteId,
+    sesionAnonimaId: carrito.sesionAnonimaId,
+    total: carrito.total,
+    observaciones: carrito.observaciones,
+    estadoEdicion: carrito.estadoEdicion,
+    fechaEdicion: carrito.fechaEdicion,
+    createdAt: carrito.createdAt,
+    updatedAt: carrito.updatedAt,
+    deletedAt: carrito.deletedAt,
+    items: items.map((item: any) => ({
+      id: item.id,
+      carritoId: item.carritoId,
+      productoId: item.productoId,
+      cantidad: item.cantidad,
+      precioUnitario: item.precioUnitario,
+      observaciones: item.observaciones,
+      producto: item.producto
+        ? {
+            id: item.producto.id,
+            nombre: item.producto.nombre,
+            codigo: item.producto.codigo,
+            precio: item.producto.precio,
+            imagen: item.producto.imagen,
+            slug: item.producto.slug,
+          }
+        : null,
+    })),
+  };
 }
 
 export async function obtenerCarritoPorId(carritoId: number) {
   const carrito = await models.Carrito.findOne({
-    where: { id: carritoId, estadoEdicion: 1 },
+    where: { id: carritoId },
     include: [
       {
         model: models.CarritoProducto,
-        as: 'items',
+        as: "items",
         include: [
           {
             model: models.Producto,
-            as: 'producto'
-          }
-        ]
-      }
-    ]
+            as: "producto",
+          },
+        ],
+      },
+    ],
   });
   await actualizarTotalCarrito(carritoId);
   return carrito;
@@ -108,7 +216,7 @@ export async function agregarProductoACarrito(
 ) {
   // 1. Traer producto real
   const producto = await models.Producto.findByPk(productoId);
-  if (!producto) throw new Error('Producto no encontrado');
+  if (!producto) throw new Error("Producto no encontrado");
 
   // 2. Validar stock
   if (producto.stock < cantidad) {
@@ -122,8 +230,7 @@ export async function agregarProductoACarrito(
 
   // 3bis. Verificar carrito existe
   const carrito = await models.Carrito.findByPk(carritoId);
-  if (!carrito) throw new Error('Carrito no encontrado');
-
+  if (!carrito) throw new Error("Carrito no encontrado");
 
   // 4. Upsert del producto en el carrito
   await models.CarritoProducto.upsert({
@@ -131,7 +238,7 @@ export async function agregarProductoACarrito(
     productoId,
     cantidad,
     precioUnitario,
-    observaciones
+    observaciones,
   });
 
   // 5. Actualizar total del carrito
@@ -149,21 +256,22 @@ export async function crearCarrito(data: any) {
       carrito = await models.Carrito.findOne({
         where: {
           clienteId: data.clienteId,
-          estadoEdicion: 1, // o el campo que uses para "abierto"
         },
       });
     } else if (data.sesionAnonimaId) {
       carrito = await models.Carrito.findOne({
         where: {
           sesionAnonimaId: data.sesionAnonimaId,
-          estadoEdicion: 1, // o el campo que uses para "abierto"
         },
       });
     }
 
     if (carrito) {
       // Limpiá los productos anteriores (opcional, si querés que al duplicar reemplace todo)
-      await models.CarritoProducto.destroy({ where: { carritoId: carrito.id }, force: true });
+      await models.CarritoProducto.destroy({
+        where: { carritoId: carrito.id },
+        force: true,
+      });
       return carrito;
     }
 
@@ -173,10 +281,12 @@ export async function crearCarrito(data: any) {
   } catch (error) {
     console.error("Error al crear carrito:", error);
     if (error instanceof Error) {
-      if ('errors' in error && Array.isArray((error as any).errors)) {
+      if ("errors" in error && Array.isArray((error as any).errors)) {
         console.error("Detalles del error:");
         for (const e of (error as any).errors) {
-          console.error(`- Path: ${e.path}, Message: ${e.message}, Value: ${e.value}`);
+          console.error(
+            `- Path: ${e.path}, Message: ${e.message}, Value: ${e.value}`
+          );
         }
       }
       throw error;
@@ -186,31 +296,28 @@ export async function crearCarrito(data: any) {
   }
 }
 
-async function actualizarTotalCarrito(carritoId: number) {
-  const productos = await models.CarritoProducto.findAll({ where: { carritoId } });
-  const total = productos.reduce(
-    (acc, item) => acc + Number(item.cantidad) * Number(item.precioUnitario),
-    0
-  );
-  await models.Carrito.update({ total }, { where: { id: carritoId } });
-}
-
 export async function actualizarCarrito(id: number, data: any) {
   const carrito = await models.Carrito.findByPk(id);
-  if (!carrito) throw new Error('Carrito no encontrado');
+  if (!carrito) throw new Error("Carrito no encontrado");
   await carrito.update(data);
   return carrito;
 }
 
-export async function eliminarProductoDeCarrito(carritoId: number, productoId: number) {
-  await models.CarritoProducto.destroy({ where: { carritoId, productoId }, force: true });
+export async function eliminarProductoDeCarrito(
+  carritoId: number,
+  productoId: number
+) {
+  await models.CarritoProducto.destroy({
+    where: { carritoId, productoId },
+    force: true,
+  });
   await actualizarTotalCarrito(carritoId);
   return true;
 }
 
 export async function eliminarCarrito(id: number) {
   const carrito = await models.Carrito.findByPk(id);
-  if (!carrito) throw new Error('Carrito no encontrado');
+  if (!carrito) throw new Error("Carrito no encontrado");
 
   await models.CarritoProducto.destroy({ where: { carritoId: id } });
   await carrito.destroy();
@@ -251,13 +358,16 @@ export async function confirmarCarrito(
     provincia,
     codigoPostal,
     categoriaFiscal = "RESPONSABLE_INSCRIPTO",
-    estadoPedidoId = 1
+    estadoPedidoId = 1,
   } = datos;
-  
+
   const t = await sequelize.transaction();
   try {
     // 0. Buscar o crear/actualizar cliente
-    let cliente = await models.Cliente.findOne({ where: { cuitOCuil: cuit }, transaction: t });
+    let cliente = await models.Cliente.findOne({
+      where: { cuitOCuil: cuit },
+      transaction: t,
+    });
 
     let datosAntes: object = {};
     let datosDespues: object = {};
@@ -272,7 +382,10 @@ export async function confirmarCarrito(
       provincia,
       codigoPostal,
       telefono,
-      categoriaFiscal
+      categoriaFiscal,
+      transporte,
+      formaEnvio,
+      formaPago
     };
 
     if (cliente) {
@@ -286,7 +399,10 @@ export async function confirmarCarrito(
         provincia: cliente.provincia,
         codigoPostal: cliente.codigoPostal,
         telefono: cliente.telefono,
-        categoriaFiscal: cliente.categoriaFiscal
+        categoriaFiscal: cliente.categoriaFiscal,
+        formaEnvio: cliente.formaEnvio,
+        formaPago: cliente.formaPago,
+        transporte: cliente.transporte
       };
 
       // Actualizar solo si hay algún cambio real
@@ -303,7 +419,7 @@ export async function confirmarCarrito(
       cliente = await models.Cliente.create(
         {
           ...camposCliente,
-          cuitOCuil: cuit
+          cuitOCuil: cuit,
         },
         { transaction: t }
       );
@@ -311,31 +427,37 @@ export async function confirmarCarrito(
 
     // Si hubo update, registrar historial
     if (clienteActualizado) {
-      await models.HistorialCliente.create({
-        clienteId: cliente.id,
-        datosAntes,
-        datosDespues,
-        origen: "pedido",
-        usuarioId: null
-      }, { transaction: t });
+      await models.HistorialCliente.create(
+        {
+          clienteId: cliente.id,
+          datosAntes,
+          datosDespues,
+          origen: "pedido",
+          usuarioId: null,
+        },
+        { transaction: t }
+      );
     }
 
     // 1. Traer el carrito con productos
     const carrito = await models.Carrito.findByPk(carritoId, {
-      include: [{ model: models.CarritoProducto, as: 'items' }],
-      transaction: t
+      include: [{ model: models.CarritoProducto, as: "items" }],
+      transaction: t,
     });
-    if (!carrito) throw new Error('Carrito no encontrado');
+    if (!carrito) throw new Error("Carrito no encontrado");
 
     const productosCarrito = await models.CarritoProducto.findAll({
       where: { carritoId },
-      transaction: t
+      transaction: t,
     });
 
     // 2. Validar stock y precio para cada producto
     for (const prod of productosCarrito) {
-      const producto = await models.Producto.findByPk(prod.productoId, { transaction: t });
-      if (!producto) throw new Error(`Producto ID ${prod.productoId} no encontrado`);
+      const producto = await models.Producto.findByPk(prod.productoId, {
+        transaction: t,
+      });
+      if (!producto)
+        throw new Error(`Producto ID ${prod.productoId} no encontrado`);
 
       if (producto.stock < prod.cantidad) {
         throw new Error(
@@ -377,7 +499,7 @@ export async function confirmarCarrito(
         localidad,
         provincia,
         codigoPostal,
-        estadoEdicion: false
+        estadoEdicion: false,
       },
       { transaction: t }
     );
@@ -389,7 +511,7 @@ export async function confirmarCarrito(
           productoId: prod.productoId,
           cantidad: prod.cantidad,
           precioUnitario: prod.precioUnitario,
-          observaciones: prod.observaciones
+          observaciones: prod.observaciones,
         },
         { transaction: t }
       );
@@ -397,7 +519,11 @@ export async function confirmarCarrito(
 
     // 5. Eliminar carrito y su detalle
     //BORRADO REAL:
-    await models.CarritoProducto.destroy({ where: { carritoId }, force: true, transaction: t });
+    await models.CarritoProducto.destroy({
+      where: { carritoId },
+      force: true,
+      transaction: t,
+    });
     await carrito.destroy({ force: true, transaction: t });
 
     /* BORRADO LOGICO:
@@ -412,10 +538,35 @@ export async function confirmarCarrito(
   }
 }
 
-export async function actualizarObservacionesGeneral(carritoId: number, observaciones: string) {
+export async function actualizarObservacionesGeneral(carritoId: number,observaciones: string) {
   const carrito = await models.Carrito.findByPk(carritoId);
   if (!carrito) return null;
   carrito.observaciones = observaciones;
   await carrito.save();
   return carrito;
+}
+
+export async function finalizarEdicionCarrito(carritoId: number): Promise<void> {
+  const carrito = await models.Carrito.findByPk(carritoId);
+  if (!carrito) throw new Error("Carrito no encontrado");
+  //await carrito.update({ estadoEdicion: 0, fechaEdicion: null });
+  await models.CarritoProducto.destroy({ where: { carritoId }, force: true});
+  await carrito.destroy({ force: true});
+}
+
+export async function obtenerEstadoEdicionCarrito(
+  carritoId: number
+): Promise<{ estadoEdicion: boolean; fechaEdicion: string | null }> {
+  const carrito = await models.Carrito.findByPk(carritoId, {
+    attributes: ["estadoEdicion", "fechaEdicion"],
+  });
+  if (!carrito) throw new Error("Carrito no encontrado");
+  return {
+    estadoEdicion: Boolean(carrito.estadoEdicion),
+    fechaEdicion: carrito.fechaEdicion
+      ? carrito.fechaEdicion instanceof Date
+        ? carrito.fechaEdicion.toISOString()
+        : carrito.fechaEdicion
+      : null,
+  };
 }

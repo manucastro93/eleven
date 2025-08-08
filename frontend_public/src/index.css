@@ -6,7 +6,8 @@
 @tailwind utilities;
 
 /* ========== GLOBAL RESET ========== */
-html, body {
+html,
+body {
   padding: 0;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -21,7 +22,7 @@ a {
   cursor: pointer;
 }
 
-button{
+button {
   cursor: pointer;
 }
 
@@ -31,6 +32,7 @@ button{
     opacity: 0;
     transform: translateY(10px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -59,17 +61,24 @@ button{
 /* ========== NAVEGACION FOR MOBILE ========== */
 
 @keyframes slideUp {
-  from { transform: translateY(100%);}
-  to { transform: translateY(0);}
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
 }
+
 .animate-slideUp {
-  animation: slideUp 0.23s cubic-bezier(.42,0,.59,1.34);
+  animation: slideUp 0.23s cubic-bezier(.42, 0, .59, 1.34);
 }
 
 /* ========== SCROLLBAR HIDDEN FOR MOBILE ========== */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -96,7 +105,8 @@ button{
   }
 
   .no-spin {
-    -moz-appearance: textfield; /* Firefox */
+    -moz-appearance: textfield;
+    /* Firefox */
   }
 }
 
@@ -122,7 +132,12 @@ button{
 }
 
 /* ========== TYPOGRAPHY ========== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 600;
 }
 
@@ -145,12 +160,46 @@ img {
   font-weight: 500 !important;
   padding: 0.65rem 1.2rem !important;
 }
+
 .solid-select-list [data-value]:hover,
 .solid-select-list [data-value][data-focused="true"] {
   background: #f3f4f6 !important;
   color: #1f2937 !important;
 }
+
 .solid-select-list [data-value][data-selected="true"] {
   background: #000 !important;
   color: #fff !important;
+}
+
+/* ==========   IMPRIMIR PEDIDO ========== */
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .modal-overlay {
+    display: none !important;
+  }
+
+  /* Asegura que el modal se imprima como contenido centrado sin overlay */
+  .print-area {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .productos-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+    .print-total {
+    justify-content: flex-end !important;
+  }
 }

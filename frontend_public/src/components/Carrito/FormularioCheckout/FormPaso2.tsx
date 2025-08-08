@@ -15,10 +15,18 @@ import { getCarritoActivo, confirmarCarrito } from "@/services/carrito.service";
 import { crearCliente, buscarClientePorCuit } from "@/services/cliente.service";
 import ToastContextual from "@/components/ui/ToastContextual";
 import { User } from "lucide-solid";
+import { useCarrito } from "@/store/carrito";
+import { opcionesPago, opcionesEnvio } from "@/constants/opciones";
 
 type OpcionEntrega = { value: string; label: string } | null;
 
-export default function FormPaso2(props: { onVolver: () => void }) {
+export default function FormPaso2(props: {
+  onVolver: () => void;
+  modoEdicion?: boolean;
+  tiempoRestante?: number;
+  onConfirmarEdicion?: (formData: any) => void;
+  pedidoEditando?: any;
+}) {
   const navigate = useNavigate();
   const [verificado, setVerificado] = createSignal(false);
   const [telefono, setTelefono] = createSignal("");
@@ -36,21 +44,12 @@ export default function FormPaso2(props: { onVolver: () => void }) {
   const [detalleTransporte, setDetalleTransporte] = createSignal(""); // SOLO string
   const [errorCuit, setErrorCuit] = createSignal("");
   const [enviando, setEnviando] = createSignal(false);
+  const { pedidoEditandoId } = useCarrito();
 
   // Toast contextual
   const [toastVisible, setToastVisible] = createSignal(false);
   const [toastMsg, setToastMsg] = createSignal<string | JSX.Element>("");
   const [toastTipo, setToastTipo] = createSignal<"success" | "error" | "warning" | "info" | "loading">("info");
-
-  const opcionesPago = [
-    { value: "1", label: "Efectivo" },
-    { value: "2", label: "Transferencia" },
-  ];
-
-  const opcionesEnvio = [
-    { value: "1", label: "Retiro en Local" },
-    { value: "2", label: "Transporte" },
-  ];
 
   const format = (item: any, _type: any) => item.label;
 
@@ -58,11 +57,13 @@ export default function FormPaso2(props: { onVolver: () => void }) {
   const [formaEnvio, setFormaEnvio] = createSignal<OpcionEntrega>(null);
 
   let toastTimeout: ReturnType<typeof setTimeout>;
+  let toastOnClose: (() => void) | null = null;
 
   function showToast(
     msg: string | JSX.Element,
     tipo: "success" | "error" | "warning" | "info" | "loading" = "info",
-    duration = 2500
+    duration = 2500,
+    onClose?: () => void
   ) {
     setToastMsg(msg);
     setToastTipo(tipo);
@@ -71,9 +72,18 @@ export default function FormPaso2(props: { onVolver: () => void }) {
     // Limpiar timeout anterior
     if (toastTimeout) clearTimeout(toastTimeout);
 
+    // Guardar el callback
+    toastOnClose = onClose || null;
+
     setTimeout(() => {
       setToastVisible(true);
-      toastTimeout = setTimeout(() => setToastVisible(false), duration);
+      toastTimeout = setTimeout(() => {
+        setToastVisible(false);
+        if (toastOnClose) {
+          toastOnClose();
+          toastOnClose = null;
+        }
+      }, duration);
     }, 0);
   }
 
@@ -200,7 +210,7 @@ export default function FormPaso2(props: { onVolver: () => void }) {
           provincia: cliente.provincia || "",
           cuitOCuil: cliente.cuitCuil || "",
           categoriaFiscal: cliente.categoriaFiscal || "",
-          codigoPostal: cliente.codigoPostal || ""
+          codigoPostal: cliente.codigoPostal || "",
         });
         const clienteLocal = await buscarClientePorCuit(val);
         if (clienteLocal) {
@@ -226,6 +236,9 @@ export default function FormPaso2(props: { onVolver: () => void }) {
       actualizarClienteEnLocalStorage("direccion", cliente.direccion || cliente.domicilio || "");
       actualizarClienteEnLocalStorage("localidad", cliente.localidad || "");
       actualizarClienteEnLocalStorage("provincia", cliente.provincia || "");
+      actualizarClienteEnLocalStorage("transporte", cliente.transporte || "");
+      actualizarClienteEnLocalStorage("formaPago", cliente.formaPago || "");
+      actualizarClienteEnLocalStorage("formaEnvio", cliente.formaEnvio || "");
 
       if (
         (cliente.direccion || cliente.domicilio) &&
@@ -316,7 +329,8 @@ export default function FormPaso2(props: { onVolver: () => void }) {
           Tocando en el icono: <User size={24} class="inline align-middle" /> ubicado en la parte superior derecha de la pantalla.
         </>,
         "success",
-        10000
+        10000,
+        () => window.location.href = "/mis-pedidos"
       );
       setTimeout(() => {
         window.location.href = "/mis-pedidos";
@@ -327,20 +341,49 @@ export default function FormPaso2(props: { onVolver: () => void }) {
     }
   }
 
+  function formatearTiempo(segundos: number) {
+    const min = Math.floor(segundos / 60).toString().padStart(2, "0");
+    const sec = (segundos % 60).toString().padStart(2, "0");
+    return `${min}:${sec}`;
+  }
+
   return (
     <div class="p-5 space-y-6 relative">
+
+      <Show when={props.modoEdicion}>
+        <div class="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-400 rounded">
+          <span class="font-semibold text-yellow-800">
+            Estás editando el pedido #{pedidoEditandoId() ?? ""}
+          </span>
+          <Show when={typeof props.tiempoRestante === "number"}>
+            <span class="ml-2 text-yellow-700 text-sm">
+              <p>Ahora podés agregar, quitar productos navegando por la web. Al final del pedido también vas a poder modificar la forma de entrega, o de envío, etc.</p>
+              <p>Tenés 30 minutos para hacer las modificaciones que quieras. Si pasado este tiempo no confirmas los cambios, el pedido se enviará sin cambios automáticamente.</p>
+              <p>Tiempo restante: {formatearTiempo(props.tiempoRestante!)}.</p>
+            </span>
+          </Show>
+        </div>
+      </Show>
+
+
       <ToastContextual
+        visible={toastVisible()}
         mensaje={toastMsg()}
         tipo={toastTipo()}
-        visible={toastVisible()}
-        onClose={() => setToastVisible(false)}
+        onClose={() => {
+          setToastVisible(false);
+          if (toastOnClose) {
+            toastOnClose();
+            toastOnClose = null;
+          }
+        }}
       />
 
       <button
         class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded text-xs"
         onClick={props.onVolver}
       >
-        ← Volver al pedido
+        ← Volver al carrito
       </button>
 
       <PasoWhatsapp
@@ -440,14 +483,30 @@ export default function FormPaso2(props: { onVolver: () => void }) {
               placeholder="Seleccioná una opción"
             />
           </div>
-
           <button
-            onClick={enviarPedido}
+            onClick={() => {
+              if (props.modoEdicion) {
+                props.onConfirmarEdicion && props.onConfirmarEdicion({
+                  direccion: direccion(),
+                  localidad: localidad(),
+                  provincia: provincia(),
+                  codigoPostal: codigoPostal(),
+                  formaEnvio: formaEnvio()?.label || "",
+                  formaPago: formaPago()?.label || "",
+                  transporte: formaEnvio()?.value === "2" ? detalleTransporte() : "",
+                });
+              } else {
+                enviarPedido();
+              }
+            }}
             class="mt-4 bg-black text-white px-4 py-2 rounded text-sm w-full"
-            disabled={enviando()}
+            disabled={enviando() || (props.modoEdicion && props.tiempoRestante === 0)}
           >
-            {enviando() ? "Enviando..." : "Enviar pedido"}
+            {enviando()
+              ? (props.modoEdicion ? "Guardando cambios..." : "Enviando...")
+              : (props.modoEdicion ? "Confirmar cambios" : "Enviar pedido")}
           </button>
+
         </>
       )}
     </div>

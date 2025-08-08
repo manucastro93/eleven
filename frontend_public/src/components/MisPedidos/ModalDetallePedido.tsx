@@ -6,6 +6,8 @@ import { duplicarPedidoACarrito } from "@/services/carrito.service";
 import { obtenerClienteDeLocalStorage } from "@/utils/localStorage";
 import { useCarrito } from "@/store/carrito";
 import ToastContextual from "@/components/ui/ToastContextual";
+import { iniciarEdicionPedido } from "@/store/edicionPedido";
+import { Truck, Package, CreditCard, Phone, Mail, Building2, BadgeDollarSign, FileText, MapPin, LocateFixed, Map, Hash } from "lucide-solid";
 
 export default function ModalDetallePedido(props: {
   pedido: Pedido;
@@ -19,7 +21,7 @@ export default function ModalDetallePedido(props: {
   const [toastMsg, setToastMsg] = createSignal("");
   const [toastTipo, setToastTipo] = createSignal<"success" | "error" | "warning" | "info" | "loading">("info");
   const [showConfirm, setShowConfirm] = createSignal(false);
-  const { setMostrarCarrito, setCarrito } = useCarrito();
+  const { setMostrarCarrito, setCarrito, inicializarCarrito, modoEdicion, setPedidoEditandoId } = useCarrito();
 
   function showToast(msg: string, tipo: "success" | "error" | "warning" | "info" | "loading" = "info", duration = 2500) {
     setToastMsg(msg);
@@ -57,22 +59,70 @@ export default function ModalDetallePedido(props: {
     }
   };
 
-  const handleEditar = () => onEditar?.(pedido.id);
+  const handleEditar = async () => {
+    showToast("Habilitando edición del pedido...", "loading", 2500);
+    setPedidoEditandoId(pedido.id);
+    await iniciarEdicionPedido(pedido.id);
+    inicializarCarrito();
+    setMostrarCarrito(true);
+    onClose();
+  };
+
+  const handleImprimir = () => {
+    window.print();
+  };
+
+  function InfoItem(props: {
+    icon: any,
+    label: string,
+    value: string | number | null | undefined,
+    full?: boolean,
+    color?: string
+    noWrap?: boolean
+  }) {
+    return (
+      <div class={`${props.full ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
+        <div class="flex items-center gap-2 mb-1">
+          <props.icon class={`w-4 h-4 ${props.color || 'text-gray-500'}`} />
+          <span class="text-xs uppercase tracking-wide text-gray-500">{props.label}</span>
+        </div>
+        <p class={`text-sm font-medium text-gray-800 leading-snug ${props.noWrap ? 'whitespace-nowrap' : 'break-words'}`}>
+          {props.value || '-'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white max-w-2xl w-full rounded-lg shadow-lg overflow-hidden">
+      <div class="bg-white max-w-2xl w-full rounded-lg shadow-lg overflow-hidden max-h-[90vh] flex flex-col print-area">
         {/* Header */}
         <div class="flex justify-between items-center p-4 border-b">
           <h2 class="text-lg font-semibold">Detalle del pedido #{pedido.id}</h2>
           <button onClick={onClose} class="text-gray-500 hover:text-black">✕</button>
         </div>
+        {/* Datos del cliente / pedido */}
+        <div class="p-4 border-b bg-gray-50">
+          <div class="bg-white rounded-xl shadow p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <InfoItem icon={Hash} color="text-orange-500" label="CUIT" value={pedido.cuit} />
+            <InfoItem icon={FileText} color="text-gray-500" label="Razón social" value={pedido.razonSocial} />
+            <InfoItem icon={Building2} color="text-gray-500" label="Nombre fantasía" value={pedido.nombreFantasia} />
+            <InfoItem icon={MapPin} color="text-red-500" label="Dirección" value={pedido.direccion} full />
+            <InfoItem icon={CreditCard} color="text-green-500" label="Forma de pago" value={pedido.formaPago} />
+            <InfoItem icon={Package} color="text-blue-500" label="Forma de envío" value={pedido.formaEnvio} />
+            <InfoItem icon={Truck} color="text-blue-500" label="Transporte" value={pedido.transporte} />
+            <InfoItem icon={Phone} color="text-purple-500" label="Teléfono" value={pedido.telefono} />
+            <InfoItem icon={Mail} color="text-purple-500" label="Email" value={pedido.email} noWrap />
+          </div>
+        </div>
+
         {/* Productos */}
-        <div class="p-4 max-h-[60vh] overflow-y-auto">
+        <div class="p-2 max-h-[60vh] overflow-y-auto productos-scroll">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b text-left">
-                <th class="py-2">Producto</th>
+                <th class="py-2"></th>
+                <th class="py-2"></th>
                 <th class="py-2 text-center">Cant.</th>
                 <th class="py-2 text-right">Precio unit.</th>
                 <th class="py-2 text-right">Total</th>
@@ -90,6 +140,7 @@ export default function ModalDetallePedido(props: {
                       />
                       <span>{prod.producto.nombre}</span>
                     </td>
+                    <td class="text-center">{prod.observaciones}</td>
                     <td class="text-center">{prod.cantidad}</td>
                     <td class="text-right">{formatearPrecio(prod.precio)}</td>
                     <td class="text-right font-medium">
@@ -102,43 +153,48 @@ export default function ModalDetallePedido(props: {
           </table>
         </div>
         {/* Footer */}
-        <div class="border-t p-4 flex justify-between items-center bg-gray-50">
+        <div class="border-t p-4 flex justify-between items-center bg-gray-50 print-total">
           <p class="font-semibold text-lg">Total: {formatearPrecio(pedido.total)}</p>
           <div class="flex gap-2">
-            {/* Mostrar solo Cancelar si estadoEdicion === 1 y estadoPedidoId === 1 */}
-            <Show when={pedido.estadoPedidoId === 1 && pedido.estadoEdicion === true}>
+            {/* Si está en edición, solo mostrá "Cancelar" */}
+            <Show when={modoEdicion() && pedido.estadoPedidoId === 1}>
               <button
                 onClick={() => setShowConfirm(true)}
                 class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
               >
-                Cancelar
+                Cancelar pedido
               </button>
             </Show>
 
-            {/* Mostrar todos los botones si estadoEdicion === 0 y estadoPedidoId === 1 */}
-            <Show when={pedido.estadoPedidoId === 1 && pedido.estadoEdicion === false}>
+            {/* Si NO está en edición y está pendiente, mostrá todos los botones */}
+            <Show when={!modoEdicion() && pedido.estadoPedidoId === 1}>
               <>
                 <button
                   onClick={() => setShowConfirm(true)}
-                  class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
+                  class="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded no-print"
                 >
                   Cancelar pedido
                 </button>
                 <button
                   onClick={handleEditar}
-                  class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1 rounded"
+                  class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-3 py-1 rounded no-print"
                 >
                   Editar
                 </button>
                 <button
                   onClick={handleDuplicar}
-                  class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded"
+                  class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded no-print"
                 >
                   Duplicar
                 </button>
+                <button
+                  onClick={handleImprimir}
+                  class="bg-gray-700 hover:bg-gray-800 text-white text-sm px-3 py-1 rounded no-print"
+                >
+                  Imprimir
+                </button>
               </>
             </Show>
-
           </div>
         </div>
       </div>

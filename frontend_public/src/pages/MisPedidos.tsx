@@ -4,6 +4,8 @@ import { obtenerPedidosPorCliente } from "@/services/pedido.service";
 import { formatearPrecio } from "@/utils/formato";
 import ModalDetallePedido from "@/components/MisPedidos/ModalDetallePedido";
 import { obtenerClienteDeLocalStorage } from "@/utils/localStorage";
+import { useCarrito } from "@/store/carrito";
+import { iniciarEdicionPedido } from "@/store/edicionPedido";
 
 // Utilidad para formatear la fecha
 function formatearFecha(fecha: string): string {
@@ -22,7 +24,7 @@ const ESTADO_PEDIDO_NOMBRE: Record<number, string> = {
 };
 
 // Mapeo de colores de estado de pedido
-const getColor = (estadoId: number) => {
+let getColor = (estadoId: number) => {
   switch (estadoId) {
     case 1: return "bg-blue-100";
     case 2: return "bg-yellow-100";
@@ -35,6 +37,7 @@ const getColor = (estadoId: number) => {
 export default function MisPedidos() {
   const [pedidoSeleccionado, setPedidoSeleccionado] = createSignal<number | null>(null);
   const cliente = obtenerClienteDeLocalStorage();
+  const { setCarrito, setMostrarCarrito  } = useCarrito();
 
   // Si no hay cliente logueado, mostrar mensaje
   if (!cliente?.id) {
@@ -49,6 +52,12 @@ export default function MisPedidos() {
     () => cliente.id ?? false,
     (id) => id ? obtenerPedidosPorCliente(id) : Promise.resolve([])
   );
+
+  function handleEditarPedido(pedidoId: number) {
+    iniciarEdicionPedido(pedidoId);
+    setPedidoSeleccionado(null);
+    setMostrarCarrito(true);
+  }
 
   return (
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -93,6 +102,7 @@ export default function MisPedidos() {
 
       <Show when={pedidoSeleccionado()}>
         <ModalDetallePedido
+          onEditar={handleEditarPedido}
           pedido={pedidos()?.find((p) => p.id === pedidoSeleccionado())!}
           onClose={() => setPedidoSeleccionado(null)}
         />

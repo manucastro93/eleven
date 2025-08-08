@@ -40,7 +40,6 @@ export async function confirmarCarrito(carritoId: number, payload: ConfirmarCarr
   return response.data;
 }
 
-// Obtener carrito activo por sesionAnonimaId (clave para carritos de invitados/anónimos)
 export async function getCarritoActivoPorSesion(sesionAnonimaId: string) {
   const response = await api.get(`/public/carritos/sesion/${sesionAnonimaId}/activo`);
   return response.data;
@@ -66,12 +65,11 @@ export async function actualizarObservacionesEnCarrito(  carritoId: number,
   const response = await api.put(`/public/carritos/${carritoId}/productos/${productoId}`, {
     observaciones, cantidad
   });
-  console.log(response.data)
   return response.data;
 }
 
-export async function actualizarObservacionesGeneralEnCarrito(id: number, observaciones: string) {
-  const response = await api.put(`/public/carritos/${id}/observaciones-general`, { observaciones });
+export async function actualizarObservacionesGeneralEnCarrito(carritoId: number, observaciones: string) {
+  const response = await api.put(`/public/carritos/${carritoId}/observaciones-general`, { observaciones });
   return response.data;
 }
 
@@ -104,7 +102,6 @@ export async function duplicarPedidoACarrito(pedido: Pedido, clienteId: number) 
   // 4. Traé el carrito actualizado del backend
   const carritoRes = await api.get(`/public/carritos/${carritoId}`);
   const carritoServer = carritoRes.data;
-  console.log("CARRITO DEL BACKEND", carritoServer);
 
   // 5. Mapear productos reales del backend a formato local
   const itemsCarrito = carritoRes.data.items.map((item: any) => ({
@@ -124,4 +121,13 @@ export async function duplicarPedidoACarrito(pedido: Pedido, clienteId: number) 
   return itemsCarrito;
 
   return carritoId;
+}
+
+export async function obtenerEstadoEdicionCarrito(carritoId: number): Promise<{ estadoEdicion: boolean; fechaEdicion: string | null; }> {
+  const { data } = await api.get(`/public/carritos/${carritoId}/estado-edicion`);
+  return data;
+}
+
+export async function finalizarEdicionCarrito(carritoId: number): Promise<void> {
+  await api.patch(`/public/carritos/${carritoId}/finalizar-edicion`);
 }

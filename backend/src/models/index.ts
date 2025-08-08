@@ -75,6 +75,7 @@ export function initModels(sequelize: Sequelize) {
   Carrito.belongsTo(Cliente, { as: "cliente", foreignKey: "clienteId" });
   Carrito.belongsToMany(Producto, {as: "productos",through: CarritoProducto,foreignKey: "carritoId",otherKey: "productoId",});
   Carrito.hasMany(CarritoProducto, { as: "items", foreignKey: "carritoId" });
+  Carrito.belongsTo(Pedido, { as: "pedidoEnEdicion", foreignKey: "pedidoId" });
 
   Producto.belongsToMany(Carrito, {as: "carritos",through: CarritoProducto,foreignKey: "productoId",otherKey: "carritoId",});
 
@@ -114,8 +115,11 @@ export function initModels(sequelize: Sequelize) {
   Pedido.belongsTo(Cliente, { as: "cliente", foreignKey: "clienteId" });
   Pedido.belongsTo(EstadoPedido, {as: "estado",foreignKey: "estadoPedidoId",});
   Pedido.belongsToMany(Producto, {as: "productos",through: PedidoProducto,foreignKey: "pedidoId",otherKey: "productoId",});
+  Pedido.hasOne(Cliente, { as: "carritoEdicion", foreignKey: "pedidoId" });
+
   Producto.belongsToMany(Pedido, {as: "pedidos",through: PedidoProducto,foreignKey: "productoId",otherKey: "pedidoId",});
   Producto.hasMany(PedidoProducto, {as: "pedidoProductos",foreignKey: "productoId",});
+
 
   // PedidoProducto
   PedidoProducto.belongsTo(Pedido, { as: "pedido", foreignKey: "pedidoId" });

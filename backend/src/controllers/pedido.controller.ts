@@ -24,7 +24,7 @@ export const getPedidosAdmin = async (req: Request, res: Response): Promise<void
   }
 };
 
-export const postPedido = async (req: Request, res: Response): Promise<void> => {
+/*export const postPedido = async (req: Request, res: Response): Promise<void> => {
   try {
     const pedidoData = req.body;
     const nuevoPedido = await pedidoService.crearPedido(pedidoData);
@@ -58,7 +58,7 @@ export const getPedidosClientePorIP = async (req: Request, res: Response): Promi
     }
   }
 };
-
+*/
 export const getPedidosPorClienteId = async (req: Request, res: Response): Promise<void> => {
   try {
     const { clienteId } = req.params;
@@ -160,7 +160,7 @@ export const putEstadoPedido = async (req: Request, res: Response): Promise<void
     }
   }
 };
-
+/*
 export const actualizarProductoPedido = async (req: Request, res: Response): Promise<void> => {
   try {
     const pedidoId = Number(req.params.pedidoId);
@@ -276,4 +276,4 @@ export const duplicarPedidoACarrito = async (req: Request, res: Response): Promi
   } catch (error: any) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Error desconocido' });
   }
-};
+};*/

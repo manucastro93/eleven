@@ -6,7 +6,7 @@ export const getCarritos = async (req: Request, res: Response): Promise<void> =>
     const { clienteId, estadoEdicion, desde, hasta, limit = 20, offset = 0 } = req.query;
     const result = await carritoService.listarCarritos({
       clienteId: clienteId ? Number(clienteId) : undefined,
-      estadoEdicion: estadoEdicion ? Number(estadoEdicion) : 1,
+      estadoEdicion: estadoEdicion ? Number(estadoEdicion) : 0,
       desde: typeof desde === 'string' ? desde : undefined,
       hasta: typeof hasta === 'string' ? hasta : undefined,
       limit: Number(limit),
@@ -29,6 +29,7 @@ export const getCarritoActivoPorSesion = async (req: Request, res: Response) => 
       return res.status(400).json({ message: "Falta sesionAnonimaId" });
 
     const carrito = await carritoService.obtenerCarritoActivoPorSesion(sesionAnonimaId);
+    
     if (!carrito)
       return res.status(404).json({ message: "Carrito no encontrado" });
 
@@ -243,7 +244,7 @@ export const confirmarCarrito = async (req: Request, res: Response): Promise<voi
   }
 };
 
-export const actualizarObservacioneseneral = async (req: Request, res: Response): Promise<void> => {
+export const actualizarObservacionesGeneral = async (req: Request, res: Response): Promise<void> => {
   try {
     const carritoId = Number(req.params.carritoId);
     const { observaciones } = req.body;
@@ -264,5 +265,34 @@ export const actualizarObservacioneseneral = async (req: Request, res: Response)
   } catch (error: any) {
     console.error("Error actualizando comentario general:", error);
     res.status(500).json({ message: error instanceof Error ? error.message : "Error inesperado" });
+  }
+};
+
+export const finalizarEdicionCarrito = async (req: Request, res: Response) => {
+  try {
+    const carritoId = Number(req.params.carritoId);
+
+    if (!carritoId) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+    await carritoService.finalizarEdicionCarrito(carritoId);
+    res.json({ message: "Edición finalizada" });
+  } catch (error) {
+    console.error("Error en finalizarEdicionCarrito:", error);
+    res.status(500).json({ message: "Error al finalizar la edición" });
+  }
+};
+
+export const obtenerEstadoEdicionCarrito = async (req: Request, res: Response) => {
+  try {
+    const carritoId = Number(req.params.id);
+    if (!carritoId) {
+      return res.status(400).json({ message: "ID inválido" });
+    }
+    const estado = await carritoService.obtenerEstadoEdicionCarrito(carritoId);
+    res.json(estado);
+  } catch (error) {
+    console.error("Error en obtenerEstadoEdicionCarrito:", error);
+    res.status(500).json({ message: "Error al obtener estado de edición" });
   }
 };

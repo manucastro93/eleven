@@ -1,6 +1,11 @@
-import { Show } from "solid-js";
+import { Show, JSX } from "solid-js";
 
-export default function ToastContextual(props:any) {
+export default function ToastContextual(props: {
+  visible: boolean;
+  mensaje: string | JSX.Element;
+  tipo: string;
+  onClose?: () => void;
+}) {
   return (
     <Show when={props.visible}>
       <div
@@ -40,12 +45,12 @@ export default function ToastContextual(props:any) {
         </div>
         <span class="text-lg font-semibold text-center">{props.mensaje}</span>
         {props.tipo !== "loading" && props.onClose && (
-          <button
-            class="mt-2 bg-black text-white rounded-lg px-4 py-1 text-xs hover:bg-gray-900"
-            onClick={props.onClose}
-          >
-            Cerrar
-          </button>
+            <button
+              class="mt-2 bg-black text-white rounded-lg px-4 py-1 text-xs hover:bg-gray-900"
+              onClick={props.onClose}
+            >
+              Aceptar
+            </button>
         )}
       </div>
     </Show>

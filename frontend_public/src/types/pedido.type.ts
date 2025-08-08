@@ -6,7 +6,7 @@ export interface PedidoProducto {
   cantidad: number;
   precio: number;
   producto: Producto;
-  observaciones: string;
+  observaciones?: string;
 }
 
 export interface PedidoResumen {
@@ -34,10 +34,11 @@ export interface PedidoResumen {
 
 export interface Pedido {
   id: number;
-  // cliente?: Cliente; // solo si hacés include, si no, sacalo
+  clienteId?: number;
   productos: PedidoProducto[];
   estadoPedidoId: number;
   estadoEdicion: boolean;
+  fechaEdicion?: Date;
   formaEnvio: string;
   transporte?: string;
   formaPago: string;

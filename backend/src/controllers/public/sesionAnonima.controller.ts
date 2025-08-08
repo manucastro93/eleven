@@ -5,6 +5,7 @@ import { mergearCarritosClienteYAnonimo } from '@/utils/mergeCarritos';
 
 export async function getSesionActual(req: Request, res: Response) {
   const sesionId = req.cookies.clienteAnonimoId;
+  
   if (!sesionId) return res.status(404).json({ mensaje: 'Sesión no encontrada' });
 
   try {
@@ -19,7 +20,7 @@ export async function getSesionActual(req: Request, res: Response) {
 export async function postVincularSesion(req: Request, res: Response) {
   const sesionId = req.cookies.clienteAnonimoId;
   const { clienteId } = req.body;
-
+  console.log("cliente id en controler: ", clienteId)
   if (!sesionId || !clienteId) {
     return res.status(400).json({ mensaje: 'Faltan datos requeridos' });
   }
@@ -53,11 +54,13 @@ export async function postCrearSesionAnonima(req: Request, res: Response) {
     const ip = req.ip;
 
     const sesion = await crearSesionAnonima(id, ip, userAgent, expiracion);
+
     res.cookie('clienteAnonimoId', id, {
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24,
     });
+
     res.json({ id: sesion.id, uuid: id });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al crear sesión', error });

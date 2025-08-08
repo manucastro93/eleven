@@ -13,15 +13,16 @@ import PaginaNuevosIngresos from "@/pages/NuevosIngresos";
 import PaginaInfo from "@/pages/Info";
 import PaginaNosotros from "@/pages/Nosotros";
 import PaginaMisPedidos from "@/pages/MisPedidos";
+import PedidoImprimir from "@/components/MisPedidos/PedidoImprimir";
 import { CarritoProvider } from './store/carrito';
 import { asegurarSesionAnonimaOnly } from "@/utils/sesionAnonima";
 
 export default function App() {
-  onMount(() => {
+  /*onMount(() => {
     asegurarSesionAnonimaOnly().catch((err) => {
       console.error("Error creando sesión anónima:", err);
     });
-  });
+  });*/
 
   return (
     <CarritoProvider>
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/info" component={PaginaInfo} />
           <Route path="/nosotros" component={PaginaNosotros} />
           <Route path="/mis-pedidos" component={PaginaMisPedidos} />
+          <Route path="/pedido/:id/imprimir" component={PedidoImprimir} />
           <Route path="/productos" component={PaginaProductos} />
           <Route path="/contacto" component={Contacto} />
         </Route>

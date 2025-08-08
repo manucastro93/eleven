@@ -4,6 +4,7 @@ export type PedidoProducto = {
   productoId: number;
   cantidad: number;
   precio: number;
+  observaciones?: string;
   producto: {
     id: number;
     nombre: string;
@@ -28,9 +29,11 @@ export type PedidoProducto = {
 
 export type PedidoResumen = {
   id: number;
+  clienteId: number;
   total: number;
   estadoPedidoId: number;
   estadoEdicion: boolean;
+  fechaEdicion?: Date | null;
   formaEnvio: string;
   transporte?: string;
   formaPago: string;

@@ -32,4 +32,7 @@ export interface Cliente {
   clienteDuxId: number;
   latitud?: number | null;
   longitud?: number | null;
+  transporte?: string;
+  formaPago?: string;
+  formaEnvio?: string;
 }

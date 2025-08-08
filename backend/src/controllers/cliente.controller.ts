@@ -34,6 +34,7 @@ export async function getClientePorId(req: Request, res: Response) {
   try {
     const cliente = await clienteService.obtenerClientePorId(id);
     if (!cliente) return res.status(404).json({ mensaje: 'Cliente no encontrado' });
+    console.log("cliente en controller por id",cliente)
     res.json(cliente);
   } catch (error) {
     res.status(400).json({ mensaje: error instanceof Error ? error.message : 'Error inesperado' });
@@ -67,6 +68,7 @@ export async function getClientePorCuit(req: Request, res: Response) {
     if (!cliente) {
       return res.status(404).json({ mensaje: 'Cliente no encontrado' });
     }
+    console.log(cliente)
     res.json(cliente);
   } catch (error) {
     console.error('Error al buscar cliente:', error);

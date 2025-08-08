@@ -15,6 +15,9 @@ interface ClienteAttributes {
   categoriaFiscal: string | null;
   latitud: number | null;
   longitud: number | null;
+  formaEnvio?: string;
+  transporte?: string;
+  formaPago?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -43,6 +46,9 @@ export class Cliente
   public categoriaFiscal!: string | null;
   public latitud!: number | null;
   public longitud!: number | null;
+  public formaEnvio?: string;
+  public transporte?: string;
+  public formaPago?: string;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -114,6 +120,18 @@ export class Cliente
         },
         longitud: {
           type: DataTypes.DECIMAL(9, 6),
+          allowNull: true,
+        },
+        transporte: {
+          type: DataTypes.TEXT(),
+          allowNull: true,
+        },
+        formaPago: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        formaEnvio: {
+          type: DataTypes.STRING(100),
           allowNull: true,
         },
         createdAt: DataTypes.DATE,

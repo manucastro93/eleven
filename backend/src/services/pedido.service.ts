@@ -68,7 +68,7 @@ export async function listarPedidos({
 
   return { pedidos: rows, total: count };
 }
-
+/*
 export async function crearPedido(pedidoData: any) {
   const t = await sequelize.transaction();
   try {
@@ -147,7 +147,8 @@ export async function crearPedido(pedidoData: any) {
     const nuevoPedido = await models.Pedido.create({
       clienteId: clienteExistente.id,
       transporte,
-      formapago,
+      formaPago,
+      formaEnvio,
       observaciones,
       estadoPedidoId: 1,     // por defecto "pendiente"
       estadoEdicion: false,
@@ -179,7 +180,7 @@ export async function obtenerPedidosPorIP(ip: string) {
       { model: models.MetodoPago, as: "metodoPago" },
     ],
   });
-}
+}*/
 
 export async function obtenerPedidosPorClienteId(clienteId: number) {
   try {
@@ -198,20 +199,98 @@ export async function obtenerPedidosPorClienteId(clienteId: number) {
   }
 }
 
-export async function obtenerPedidoPorId(id: number) {
-  try {
-    const pedido = await models.Pedido.findByPk(id, {
-      include: [
-        { model: models.Cliente, as: "cliente" },
-        { model: models.EstadoPedido, as: "estadoPedido" },
-        { model: models.MetodoEnvio, as: "metodoEnvio" },
-        { model: models.MetodoPago, as: "metodoPago" },
-      ],
-    });
-    return pedido;
-  } catch (error) {
-    throw new Error("Error al obtener el pedido");
-  }
+export async function obtenerPedidoPorId(pedidoId: number) {
+  if (!pedidoId) throw new Error("pedidoId es requerido");
+
+  const pedidos = await models.Pedido.findAll({
+    where: { id: pedidoId },
+    order: [["createdAt", "DESC"]],
+    include: [
+      {
+        model: models.Producto,
+        as: "productos",
+        attributes: [
+          "id",
+          "nombre",
+          "descripcion",
+          "codigo",
+          "precio",
+          "slug",
+          "activo",
+          "imagen"
+        ],
+        through: {
+          attributes: ["cantidad", "precioUnitario"], // Detalle del join PedidoProducto
+        },
+        include: [
+          {
+            model: models.Categoria,
+            as: "categoria",
+            attributes: ["id", "nombre", "slug", "orden"]
+          }
+        ]
+      }
+    ],
+    attributes: [
+      "id",
+      "total",
+      "estadoPedidoId",
+      "estadoEdicion",
+      "formaEnvio",
+      "transporte",
+      "formaPago",
+      "telefono",
+      "email",
+      "nombreFantasia",
+      "cuit",
+      "categoriaFiscal",
+      "razonSocial",
+      "direccion",
+      "localidad",
+      "provincia",
+      "codigoPostal",
+      "observaciones",
+      "createdAt"
+    ]
+  });
+
+  return pedidos.map((pedido: any) => ({
+    id: pedido.id,
+    total: pedido.total,
+    estadoPedidoId: pedido.estadoPedidoId,
+    estadoEdicion: pedido.estadoEdicion,
+    formaEnvio: pedido.formaEnvio,
+    transporte: pedido.transporte,
+    formaPago: pedido.formaPago,
+    telefono: pedido.telefono,
+    email: pedido.email,
+    nombreFantasia: pedido.nombreFantasia,
+    cuit: pedido.cuit,
+    categoriaFiscal: pedido.categoriaFiscal,
+    razonSocial: pedido.razonSocial,
+    direccion: pedido.direccion,
+    localidad: pedido.localidad,
+    provincia: pedido.provincia,
+    codigoPostal: pedido.codigoPostal,
+    observaciones: pedido.observaciones,
+    createdAt: pedido.createdAt,
+    productos: (pedido.productos || []).map((producto: any) => ({
+      productoId: producto.id,
+      cantidad: producto.PedidoProducto?.cantidad ?? 1,
+      precio: producto.PedidoProducto?.precioUnitario ?? producto.precio,
+      producto: {
+        id: producto.id,
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        codigo: producto.codigo,
+        precio: producto.precio,
+        slug: producto.slug,
+        activo: producto.activo,
+        imagen: producto.imagen,
+        categoria: producto.categoria
+      }
+    }))
+  }));
 }
 
 export async function actualizarPedidoCliente(id: number, data: any) {
@@ -442,3 +521,16 @@ export async function duplicarPedidoACarrito(pedidoId: number, clienteId: number
   }
 }
 
+export async function actualizarEstadoEdicion(
+  pedidoId: number,
+  estadoEdicion: boolean,
+  fechaEdicion: Date | null
+) {
+  const pedido = await models.Pedido.findByPk(pedidoId);
+  if (!pedido) throw new Error("Pedido no encontrado");
+  await pedido.update({
+    estadoEdicion,
+    fechaEdicion
+  });
+  return pedido;
+}

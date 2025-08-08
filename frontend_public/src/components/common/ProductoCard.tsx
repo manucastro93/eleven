@@ -44,7 +44,6 @@ const handleAgregar = async () => {
   }
 };
 
-
   return (
     <div class="cursor-pointer text-sm p-2 rounded-lg hover:shadow-sm transition">
       <div

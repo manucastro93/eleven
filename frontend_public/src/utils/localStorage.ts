@@ -9,10 +9,7 @@ export function obtenerClienteDeLocalStorage(): ClienteFormulario | null {
   return data ? JSON.parse(data) : null;
 }
 
-export function actualizarClienteEnLocalStorage(
-  campo: keyof ClienteFormulario | string,
-  valor: any
-) {
+export function actualizarClienteEnLocalStorage(campo: keyof ClienteFormulario | string, valor: any) {
   const data = localStorage.getItem("cliente");
   let cliente = data ? JSON.parse(data) : {};
   cliente[campo] = valor;

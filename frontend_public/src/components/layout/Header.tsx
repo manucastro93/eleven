@@ -4,7 +4,7 @@ import { useNavigate } from "@solidjs/router";
 import TextoPromoSlider from "@/components/common/TextoPromoSlider";
 import BuscadorOverlay from "@/components/common/BuscadorOverlay";
 import NavegacionDesktop from "@/components/layout/NavegacionDesktop";
-import { useCarrito, versionCarrito } from "@/store/carrito";
+import { useCarrito, /*versionCarrito*/ } from "@/store/carrito";
 import { obtenerClienteDeLocalStorage } from "@/utils/localStorage";
 
 export let promoRef: HTMLDivElement | undefined;
@@ -28,7 +28,7 @@ export default function Header(props: { onCart: () => void }) {
   });
 
   createEffect(() => {
-    versionCarrito();
+    //versionCarrito();
     setAnimarCarrito(true);
     const timeout = setTimeout(() => setAnimarCarrito(false), 300);
     return () => clearTimeout(timeout);

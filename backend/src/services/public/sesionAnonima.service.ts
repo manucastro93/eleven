@@ -26,7 +26,7 @@ export async function vincularSesionConCliente(sesionId: string, clienteId: numb
       where: {
         sesionAnonimaId: sesionId,
         clienteId: { [Op.is]: null },
-        estadoEdicion: 1 // activo
+        // nose si va estadoEdicion: 1
       }
     }
   );

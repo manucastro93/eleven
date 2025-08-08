@@ -7,6 +7,8 @@ interface CarritoAttributes {
   total: number;
   observaciones?: string;
   estadoEdicion: number;
+  pedidoId?: number | null;
+  fechaEdicion?: Date | null; 
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -21,6 +23,8 @@ export class Carrito extends Model<CarritoAttributes, CarritoCreationAttributes>
   public total!: number;
   public observaciones?: string;
   public estadoEdicion!: number;
+  public pedidoId?: number | null;
+  public fechaEdicion?: Date | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt!: Date;
@@ -51,7 +55,15 @@ export class Carrito extends Model<CarritoAttributes, CarritoCreationAttributes>
       estadoEdicion: {
         type: DataTypes.TINYINT,
         allowNull: false,
-        defaultValue: 1
+        defaultValue: 0
+      },
+      pedidoId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
+      fechaEdicion: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE,

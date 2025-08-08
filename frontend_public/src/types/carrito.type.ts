@@ -28,4 +28,5 @@ export type ConfirmarCarritoPayload = {
   formaEnvio: string;
   transporte: string;
   formaPago: string;
+  observaciones?: string;
 };

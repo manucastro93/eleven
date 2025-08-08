@@ -24,7 +24,7 @@ export default function ProductoDetalle() {
   const fetchProducto = () => obtenerProductoPorSlug(params.slug);
   const [producto, { refetch }] = createResource(fetchProducto);
 
-  const { agregarAlCarrito, carrito, setCarrito } = useCarrito();
+  const { agregarAlCarrito, carrito, setCarrito, actualizarCantidadEnCarrito } = useCarrito();
 
   const [zoomActivo, setZoomActivo] = createSignal(false);
   const [zoomIndex, setZoomIndex] = createSignal(0);
@@ -80,18 +80,20 @@ export default function ProductoDetalle() {
 
   // ---------------------------------------------------
 
-  const handleAgregar = () => {
-    const p = producto();
-    if (!p) return;
+  const handleAgregar = async () => {
+    try {
+      const p = producto();
+      if (!p) return;
 
-    const existentes = carrito();
-    const index = existentes.findIndex((item) => item.id === p.id);
+      const existentes = carrito();
+      const index = existentes.findIndex((item) => item.id === p.id);
 
-    if (index >= 0) {
-      const actualizados = [...existentes];
-      actualizados[index].cantidad += cantidad();
-      setCarrito(actualizados);
-    } else {
+      if (index >= 0) {
+        const actualizados = [...existentes];
+        actualizados[index].cantidad += cantidad();
+        setCarrito(actualizados);
+        await actualizarCantidadEnCarrito(p.id, actualizados[index].cantidad);
+      } else {
         agregarAlCarrito({
           id: p.id,
           nombre: p.nombre,
@@ -101,10 +103,13 @@ export default function ProductoDetalle() {
           cantidad: cantidad(),
           slug: p.slug,
         });
+      }
+      //localStorage.setItem("carrito", JSON.stringify(carrito()));
+      mostrarToast("Producto agregado al carrito");
+    } catch (error) {
+      console.error("Error agregando producto al carrito:", error);
+      mostrarToast("Error al agregar producto. Intentá de nuevo.");
     }
-
-    localStorage.setItem("carrito", JSON.stringify(carrito()));
-    mostrarToast("Producto agregado al carrito");
   };
 
   createEffect(() => {
