@@ -17,6 +17,7 @@ import ToastContextual from "@/components/ui/ToastContextual";
 import { User } from "lucide-solid";
 import { useCarrito } from "@/store/carrito";
 import { opcionesPago, opcionesEnvio } from "@/constants/opciones";
+import { useToastContextual } from "@/hooks/useToastContextual";
 
 type OpcionEntrega = { value: string; label: string } | null;
 
@@ -45,47 +46,12 @@ export default function FormPaso2(props: {
   const [errorCuit, setErrorCuit] = createSignal("");
   const [enviando, setEnviando] = createSignal(false);
   const { pedidoEditandoId } = useCarrito();
-
-  // Toast contextual
-  const [toastVisible, setToastVisible] = createSignal(false);
-  const [toastMsg, setToastMsg] = createSignal<string | JSX.Element>("");
-  const [toastTipo, setToastTipo] = createSignal<"success" | "error" | "warning" | "info" | "loading">("info");
+  const { toastVisible, toastMsg, toastTipo, showToast, handleClose } = useToastContextual();
 
   const format = (item: any, _type: any) => item.label;
 
   const [formaPago, setFormaPago] = createSignal<OpcionEntrega>(null);
   const [formaEnvio, setFormaEnvio] = createSignal<OpcionEntrega>(null);
-
-  let toastTimeout: ReturnType<typeof setTimeout>;
-  let toastOnClose: (() => void) | null = null;
-
-  function showToast(
-    msg: string | JSX.Element,
-    tipo: "success" | "error" | "warning" | "info" | "loading" = "info",
-    duration = 2500,
-    onClose?: () => void
-  ) {
-    setToastMsg(msg);
-    setToastTipo(tipo);
-    setToastVisible(false);
-
-    // Limpiar timeout anterior
-    if (toastTimeout) clearTimeout(toastTimeout);
-
-    // Guardar el callback
-    toastOnClose = onClose || null;
-
-    setTimeout(() => {
-      setToastVisible(true);
-      toastTimeout = setTimeout(() => {
-        setToastVisible(false);
-        if (toastOnClose) {
-          toastOnClose();
-          toastOnClose = null;
-        }
-      }, duration);
-    }, 0);
-  }
 
   // Autocomplete hooks
   const {
@@ -348,167 +314,163 @@ export default function FormPaso2(props: {
   }
 
   return (
-    <div class="p-5 space-y-6 relative">
+    <>
 
-      <Show when={props.modoEdicion}>
-        <div class="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-400 rounded">
-          <span class="font-semibold text-yellow-800">
-            Estás editando el pedido #{pedidoEditandoId() ?? ""}
-          </span>
-          <Show when={typeof props.tiempoRestante === "number"}>
-            <span class="ml-2 text-yellow-700 text-sm">
-              <p>Ahora podés agregar, quitar productos navegando por la web. Al final del pedido también vas a poder modificar la forma de entrega, o de envío, etc.</p>
-              <p>Tenés 30 minutos para hacer las modificaciones que quieras. Si pasado este tiempo no confirmas los cambios, el pedido se enviará sin cambios automáticamente.</p>
-              <p>Tiempo restante: {formatearTiempo(props.tiempoRestante!)}.</p>
+      <div class="p-5 space-y-6 relative">
+        <Show when={props.modoEdicion}>
+          <div class="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-400 rounded">
+            <span class="font-semibold text-yellow-800">
+              Estás editando el pedido #{pedidoEditandoId() ?? ""}
             </span>
-          </Show>
-        </div>
-      </Show>
+            <Show when={typeof props.tiempoRestante === "number"}>
+              <span class="ml-2 text-yellow-700 text-sm">
+                <p>Ahora podés agregar, quitar productos navegando por la web. Al final del pedido también vas a poder modificar la forma de entrega, o de envío, etc.</p>
+                <p>Tenés 30 minutos para hacer las modificaciones que quieras. Si pasado este tiempo no confirmas los cambios, el pedido se enviará sin cambios automáticamente.</p>
+                <p>Tiempo restante: {formatearTiempo(props.tiempoRestante!)}.</p>
+              </span>
+            </Show>
+          </div>
+        </Show>
 
+        <button
+          class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded text-xs"
+          onClick={props.onVolver}
+        >
+          ← Volver al carrito
+        </button>
+
+        <PasoWhatsapp
+          telefono={telefono}
+          setTelefono={setTelefono}
+          codigo={codigo}
+          setCodigo={setCodigo}
+          codigoEnviado={codigoEnviado}
+          setCodigoEnviado={setCodigoEnviado}
+          verificado={verificado}
+          setVerificado={setVerificado}
+        />
+
+        {verificado() && (
+          <>
+            <PasoDatosEmpresa
+              cuit={cuit}
+              setCuit={handleCuitInput}
+              razonSocial={razonSocial}
+              setRazonSocial={setRazonSocial}
+              nombreFantasia={nombreFantasia}
+              setNombreFantasia={setNombreFantasia}
+              email={email}
+              setEmail={setEmail}
+              telefono={telefono}
+              setTelefono={setTelefono}
+              errorCuit={errorCuit}
+            />
+            {buscandoDatos() && (
+              <div class="my-2 text-sm text-gray-600">Buscando datos...</div>
+            )}
+
+            <PasoDireccion
+              direccion={direccion}
+              setDireccion={setDireccion}
+              localidad={localidad}
+              setLocalidad={setLocalidad}
+              provincia={provincia}
+              setProvincia={setProvincia}
+              codigoPostal={codigoPostal}
+              setCodigoPostal={setCodigoPostal}
+              inputDireccion={inputDireccion}
+              setInputDireccion={setInputDireccion}
+              sugerencias={sugerencias}
+              mostrarSugerencias={mostrarSugerencias}
+              setMostrarSugerencias={setMostrarSugerencias}
+              errorDireccion={errorDireccion}
+              handleInput={handleInput}
+              handleSelect={handleSelect}
+            />
+
+            <div class="flex gap-2 items-center">
+              <div class="flex-1">
+                <label class="block text-sm mb-1">Forma de entrega</label>
+                <Select
+                  options={opcionesEnvio}
+                  format={format}
+                  initialValue={formaEnvio()}
+                  onChange={(opt) => {
+                    setFormaEnvio(opt);
+                    actualizarClienteEnLocalStorage("formaEnvio", opt);
+                  }}
+                  placeholder="Seleccioná una opción"
+                />
+              </div>
+              <Show when={formaEnvio()?.value === "2"}>
+                <div class="flex-1">
+                  <label class="block text-sm mb-1">Expreso</label>
+                  <input
+                    type="text"
+                    class="w-full md:w-80 px-2 py-2 border border-gray-300 rounded text-xs"
+                    placeholder="Ej: Expreso X, dirección, etc."
+                    autocomplete="new-password"
+                    autocorrect="off"
+                    spellcheck={false}
+                    name="transporte"
+                    value={detalleTransporte()}
+                    onInput={e => {
+                      setDetalleTransporte(e.currentTarget.value);
+                      actualizarClienteEnLocalStorage("transporte", e.currentTarget.value);
+                    }}
+                  />
+                </div>
+              </Show>
+            </div>
+
+            <div>
+              <label class="block text-sm mb-1">Forma de pago</label>
+              <Select
+                options={opcionesPago}
+                format={format}
+                initialValue={formaPago()}
+                onChange={(opt) => {
+                  setFormaPago(opt);
+                  actualizarClienteEnLocalStorage("formaPago", opt);
+                }}
+                placeholder="Seleccioná una opción"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (props.modoEdicion) {
+                  props.onConfirmarEdicion && props.onConfirmarEdicion({
+                    direccion: direccion(),
+                    localidad: localidad(),
+                    provincia: provincia(),
+                    codigoPostal: codigoPostal(),
+                    formaEnvio: formaEnvio()?.label || "",
+                    formaPago: formaPago()?.label || "",
+                    transporte: formaEnvio()?.value === "2" ? detalleTransporte() : "",
+                  });
+                } else {
+                  enviarPedido();
+                }
+              }}
+              class="mt-4 bg-black text-white px-4 py-2 rounded text-sm w-full"
+              disabled={enviando() || (props.modoEdicion && props.tiempoRestante === 0)}
+            >
+              {enviando()
+                ? (props.modoEdicion ? "Guardando cambios..." : "Enviando...")
+                : (props.modoEdicion ? "Confirmar cambios" : "Enviar pedido")}
+            </button>
+
+          </>
+        )}
+      </div>
 
       <ToastContextual
         visible={toastVisible()}
         mensaje={toastMsg()}
         tipo={toastTipo()}
-        onClose={() => {
-          setToastVisible(false);
-          if (toastOnClose) {
-            toastOnClose();
-            toastOnClose = null;
-          }
-        }}
+        onClose={handleClose}
       />
 
-      <button
-        class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded text-xs"
-        onClick={props.onVolver}
-      >
-        ← Volver al carrito
-      </button>
-
-      <PasoWhatsapp
-        telefono={telefono}
-        setTelefono={setTelefono}
-        codigo={codigo}
-        setCodigo={setCodigo}
-        codigoEnviado={codigoEnviado}
-        setCodigoEnviado={setCodigoEnviado}
-        verificado={verificado}
-        setVerificado={setVerificado}
-      />
-
-      {verificado() && (
-        <>
-          <PasoDatosEmpresa
-            cuit={cuit}
-            setCuit={handleCuitInput}
-            razonSocial={razonSocial}
-            setRazonSocial={setRazonSocial}
-            nombreFantasia={nombreFantasia}
-            setNombreFantasia={setNombreFantasia}
-            email={email}
-            setEmail={setEmail}
-            telefono={telefono}
-            setTelefono={setTelefono}
-            errorCuit={errorCuit}
-          />
-          {buscandoDatos() && (
-            <div class="my-2 text-sm text-gray-600">Buscando datos...</div>
-          )}
-
-          <PasoDireccion
-            direccion={direccion}
-            setDireccion={setDireccion}
-            localidad={localidad}
-            setLocalidad={setLocalidad}
-            provincia={provincia}
-            setProvincia={setProvincia}
-            codigoPostal={codigoPostal}
-            setCodigoPostal={setCodigoPostal}
-            inputDireccion={inputDireccion}
-            setInputDireccion={setInputDireccion}
-            sugerencias={sugerencias}
-            mostrarSugerencias={mostrarSugerencias}
-            setMostrarSugerencias={setMostrarSugerencias}
-            errorDireccion={errorDireccion}
-            handleInput={handleInput}
-            handleSelect={handleSelect}
-          />
-
-          <div class="flex gap-2 items-center">
-            <div class="flex-1">
-              <label class="block text-sm mb-1">Forma de entrega</label>
-              <Select
-                options={opcionesEnvio}
-                format={format}
-                initialValue={formaEnvio()}
-                onChange={(opt) => {
-                  setFormaEnvio(opt);
-                  actualizarClienteEnLocalStorage("formaEnvio", opt);
-                }}
-                placeholder="Seleccioná una opción"
-              />
-            </div>
-            <Show when={formaEnvio()?.value === "2"}>
-              <div class="flex-1">
-                <label class="block text-sm mb-1">Expreso</label>
-                <input
-                  type="text"
-                  class="w-full md:w-80 px-2 py-2 border border-gray-300 rounded text-xs"
-                  placeholder="Ej: Expreso X, dirección, etc."
-                  autocomplete="new-password"
-                  autocorrect="off"
-                  spellcheck={false}
-                  name="transporte"
-                  value={detalleTransporte()}
-                  onInput={e => {
-                    setDetalleTransporte(e.currentTarget.value);
-                    actualizarClienteEnLocalStorage("transporte", e.currentTarget.value);
-                  }}
-                />
-              </div>
-            </Show>
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Forma de pago</label>
-            <Select
-              options={opcionesPago}
-              format={format}
-              initialValue={formaPago()}
-              onChange={(opt) => {
-                setFormaPago(opt);
-                actualizarClienteEnLocalStorage("formaPago", opt);
-              }}
-              placeholder="Seleccioná una opción"
-            />
-          </div>
-          <button
-            onClick={() => {
-              if (props.modoEdicion) {
-                props.onConfirmarEdicion && props.onConfirmarEdicion({
-                  direccion: direccion(),
-                  localidad: localidad(),
-                  provincia: provincia(),
-                  codigoPostal: codigoPostal(),
-                  formaEnvio: formaEnvio()?.label || "",
-                  formaPago: formaPago()?.label || "",
-                  transporte: formaEnvio()?.value === "2" ? detalleTransporte() : "",
-                });
-              } else {
-                enviarPedido();
-              }
-            }}
-            class="mt-4 bg-black text-white px-4 py-2 rounded text-sm w-full"
-            disabled={enviando() || (props.modoEdicion && props.tiempoRestante === 0)}
-          >
-            {enviando()
-              ? (props.modoEdicion ? "Guardando cambios..." : "Enviando...")
-              : (props.modoEdicion ? "Confirmar cambios" : "Enviar pedido")}
-          </button>
-
-        </>
-      )}
-    </div>
+    </>
   );
 }

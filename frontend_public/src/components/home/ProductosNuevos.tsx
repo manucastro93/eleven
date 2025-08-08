@@ -4,7 +4,7 @@ import { listarProductos } from "@/services/producto.service";
 
 export default function ProductosNuevos() {
   const [productos] = createResource(() =>
-    listarProductos({ orden: "nuevos", pagina: 1 })
+    listarProductos({ orden: "fecha_creacion-desc", pagina: 1 })
   );
 
   let sliderRef: HTMLDivElement | undefined;

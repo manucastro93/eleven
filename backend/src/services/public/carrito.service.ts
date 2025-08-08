@@ -219,11 +219,12 @@ export async function agregarProductoACarrito(
   if (!producto) throw new Error("Producto no encontrado");
 
   // 2. Validar stock
+  /*
   if (producto.stock < cantidad) {
     throw new Error(
       `Stock insuficiente para "${producto.nombre}". Stock disponible: ${producto.stock}`
     );
-  }
+  }*/
 
   // 3. Usar precio vigente de la BD
   const precioUnitario = producto.precio;
@@ -323,6 +324,39 @@ export async function eliminarCarrito(id: number) {
   await carrito.destroy();
 
   return true;
+}
+
+export async function actualizarObservacionesGeneral(carritoId: number,observaciones: string) {
+  const carrito = await models.Carrito.findByPk(carritoId);
+  if (!carrito) return null;
+  carrito.observaciones = observaciones;
+  await carrito.save();
+  return carrito;
+}
+
+export async function finalizarEdicionCarrito(carritoId: number): Promise<void> {
+  const carrito = await models.Carrito.findByPk(carritoId);
+  if (!carrito) throw new Error("Carrito no encontrado");
+  //await carrito.update({ estadoEdicion: 0, fechaEdicion: null });
+  await models.CarritoProducto.destroy({ where: { carritoId }, force: true});
+  await carrito.destroy({ force: true});
+}
+
+export async function obtenerEstadoEdicionCarrito(
+  carritoId: number
+): Promise<{ estadoEdicion: boolean; fechaEdicion: string | null }> {
+  const carrito = await models.Carrito.findByPk(carritoId, {
+    attributes: ["estadoEdicion", "fechaEdicion"],
+  });
+  if (!carrito) throw new Error("Carrito no encontrado");
+  return {
+    estadoEdicion: Boolean(carrito.estadoEdicion),
+    fechaEdicion: carrito.fechaEdicion
+      ? carrito.fechaEdicion instanceof Date
+        ? carrito.fechaEdicion.toISOString()
+        : carrito.fechaEdicion
+      : null,
+  };
 }
 
 export async function confirmarCarrito(
@@ -459,9 +493,9 @@ export async function confirmarCarrito(
       if (!producto)
         throw new Error(`Producto ID ${prod.productoId} no encontrado`);
 
-      if (producto.stock < prod.cantidad) {
+      if (producto.stock < 10) {
         throw new Error(
-          `Stock insuficiente para "${producto.nombre}". Stock disponible: ${producto.stock}`
+          `Stock insuficiente para "${producto.nombre}".`
         );
       }
       if (Number(prod.precioUnitario) !== Number(producto.precio)) {
@@ -536,37 +570,4 @@ export async function confirmarCarrito(
     await t.rollback();
     throw error;
   }
-}
-
-export async function actualizarObservacionesGeneral(carritoId: number,observaciones: string) {
-  const carrito = await models.Carrito.findByPk(carritoId);
-  if (!carrito) return null;
-  carrito.observaciones = observaciones;
-  await carrito.save();
-  return carrito;
-}
-
-export async function finalizarEdicionCarrito(carritoId: number): Promise<void> {
-  const carrito = await models.Carrito.findByPk(carritoId);
-  if (!carrito) throw new Error("Carrito no encontrado");
-  //await carrito.update({ estadoEdicion: 0, fechaEdicion: null });
-  await models.CarritoProducto.destroy({ where: { carritoId }, force: true});
-  await carrito.destroy({ force: true});
-}
-
-export async function obtenerEstadoEdicionCarrito(
-  carritoId: number
-): Promise<{ estadoEdicion: boolean; fechaEdicion: string | null }> {
-  const carrito = await models.Carrito.findByPk(carritoId, {
-    attributes: ["estadoEdicion", "fechaEdicion"],
-  });
-  if (!carrito) throw new Error("Carrito no encontrado");
-  return {
-    estadoEdicion: Boolean(carrito.estadoEdicion),
-    fechaEdicion: carrito.fechaEdicion
-      ? carrito.fechaEdicion instanceof Date
-        ? carrito.fechaEdicion.toISOString()
-        : carrito.fechaEdicion
-      : null,
-  };
 }

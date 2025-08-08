@@ -70,8 +70,9 @@ export async function listarProductosPublicos({
   if (orden === "precio-asc") order = [["precio", "ASC"]];
   else if (orden === "precio-desc") order = [["precio", "DESC"]];
   else if (orden === "nombre-desc") order = [["nombre", "DESC"]];
-  else if (orden === "novedades" || orden === "fecha-desc") {
-    order = [["createdAt", "DESC"]];
+  else if (orden === "nombre-asc") order = [["nombre", "ASC"]];
+  else if (orden === "novedades" || orden === "fecha_creacion-desc") {
+    order = [["fecha_creacion", "DESC"]];
   } else if (orden === "destacado") {
     attributes = {
       include: [

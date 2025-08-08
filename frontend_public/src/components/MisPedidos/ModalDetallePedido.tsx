@@ -8,6 +8,7 @@ import { useCarrito } from "@/store/carrito";
 import ToastContextual from "@/components/ui/ToastContextual";
 import { iniciarEdicionPedido } from "@/store/edicionPedido";
 import { Truck, Package, CreditCard, Phone, Mail, Building2, BadgeDollarSign, FileText, MapPin, LocateFixed, Map, Hash } from "lucide-solid";
+import { useToastContextual } from "@/hooks/useToastContextual";
 
 export default function ModalDetallePedido(props: {
   pedido: Pedido;
@@ -17,21 +18,9 @@ export default function ModalDetallePedido(props: {
   onDuplicar?: (id: number) => void;
 }) {
   const { pedido, onClose, onCancelar, onEditar, onDuplicar } = props;
-  const [toastVisible, setToastVisible] = createSignal(false);
-  const [toastMsg, setToastMsg] = createSignal("");
-  const [toastTipo, setToastTipo] = createSignal<"success" | "error" | "warning" | "info" | "loading">("info");
   const [showConfirm, setShowConfirm] = createSignal(false);
   const { setMostrarCarrito, setCarrito, inicializarCarrito, modoEdicion, setPedidoEditandoId } = useCarrito();
-
-  function showToast(msg: string, tipo: "success" | "error" | "warning" | "info" | "loading" = "info", duration = 2500) {
-    setToastMsg(msg);
-    setToastTipo(tipo);
-    setToastVisible(false);
-    setTimeout(() => {
-      setToastVisible(true);
-      setTimeout(() => setToastVisible(false), duration);
-    }, 0);
-  }
+  const { toastVisible, toastMsg, toastTipo, showToast, handleClose } = useToastContextual();
 
   const handleDuplicar = async () => {
     try {
@@ -198,12 +187,14 @@ export default function ModalDetallePedido(props: {
           </div>
         </div>
       </div>
+      
       <ToastContextual
+        visible={toastVisible()}
         mensaje={toastMsg()}
         tipo={toastTipo()}
-        visible={toastVisible()}
-        onClose={() => setToastVisible(false)}
+        onClose={handleClose}
       />
+
       {/* Confirmación para cancelar */}
       <Show when={showConfirm()}>
         <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-60">

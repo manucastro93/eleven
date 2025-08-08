@@ -14,7 +14,7 @@ interface CarritoAttributes {
   deletedAt?: Date;
 }
 
-type CarritoCreationAttributes = Optional<CarritoAttributes, 'id' | 'observaciones' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+type CarritoCreationAttributes = Optional<CarritoAttributes, 'id' | 'observaciones' | 'pedidoId' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
 export class Carrito extends Model<CarritoAttributes, CarritoCreationAttributes> implements CarritoAttributes {
   public id!: number;

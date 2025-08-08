@@ -147,12 +147,23 @@ export async function sincronizarProductosDesdeDux() {
         ? dayjs(item.fecha_creacion, "MMM D, YYYY h:mm:ss A").toDate()
         : null;
 
+      const productoExistente = await models.Producto.findOne({
+        where: { codigo: item.cod_item }
+      });
+
+      let stock = calcularStock(item);
+      if (productoExistente) {
+        if(stock > productoExistente.stock){
+          stock = productoExistente.stock
+        }
+      }
+
       const data = {
         nombre: item.item,
         descripcion: item.descripcion || '',
         codigo: item.cod_item,
         precio: precioFinal,
-        stock: calcularStock(item),
+        stock: stock,
         categoriaId,
         subcategoriaId,
         activo: true,
@@ -162,10 +173,6 @@ export async function sincronizarProductosDesdeDux() {
         slug: slugify(`${item.item}-${item.cod_item}`, { lower: true }),
       };
 
-      const productoExistente = await models.Producto.findOne({
-        where: { codigo: item.cod_item }
-      });
-
       if (productoExistente) {
         await productoExistente.update(data);
         actualizados++;
@@ -173,6 +180,7 @@ export async function sincronizarProductosDesdeDux() {
         await models.Producto.create(data);
         creados++;
       }
+
     } catch (error) {
       console.error(`❌ Error procesando producto ${item.cod_item}:`, error);
     }

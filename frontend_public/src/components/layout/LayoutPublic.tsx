@@ -1,49 +1,30 @@
-import { createSignal, onCleanup, createEffect, JSX } from "solid-js";
+import { createSignal, onCleanup, createEffect } from "solid-js";
 import Header from "./Header";
 import Footer from "./Footer";
-import CarritoDesplegable from "../Carrito/CarritoDesplegable";
+import CarritoDesplegable from "@/components/Carrito/CarritoDesplegable";
 import BottomNavbar from "./BottomNavbar";
 import ToastContextual from "@/components/ui/ToastContextual";
 import type { RouteSectionProps } from "@solidjs/router";
 import { useCarrito } from "@/store/carrito";
 import { confirmarEdicionPedido } from "@/services";
+import { useToastContextual } from "@/hooks/useToastContextual";
 
 export default function LayoutPublic(props: RouteSectionProps) {
-  const { mostrarCarrito, setMostrarCarrito, modoEdicion, fechaEdicion, finalizarEdicion, pedidoEditandoId, carritoId } = useCarrito();
+  const {
+    mostrarCarrito,
+    setMostrarCarrito,
+    modoEdicion,
+    fechaEdicion,
+    finalizarEdicion,
+    pedidoEditandoId,
+    carritoId
+  } = useCarrito();
+
   const abrirCarrito = () => setMostrarCarrito(true);
   const cerrarCarrito = () => setMostrarCarrito(false);
   const [tiempoRestante, setTiempoRestante] = createSignal<number>(1800);
-
-  // ---- Toast Contextual ----
-  const [toastVisible, setToastVisible] = createSignal(false);
-  const [toastMsg, setToastMsg] = createSignal<string | JSX.Element>("");
-  const [toastTipo, setToastTipo] = createSignal<"success" | "error" | "warning" | "info" | "loading">("info");
-  let toastTimeout: ReturnType<typeof setTimeout>;
-  let toastOnClose: (() => void) | null = null;
-
-  function showToast(
-    msg: string | JSX.Element,
-    tipo: "success" | "error" | "warning" | "info" | "loading" = "info",
-    duration = 2500,
-    onClose?: () => void
-  ) {
-    setToastMsg(msg);
-    setToastTipo(tipo);
-    setToastVisible(false);
-    if (toastTimeout) clearTimeout(toastTimeout);
-    toastOnClose = onClose || null;
-    setTimeout(() => {
-      setToastVisible(true);
-      toastTimeout = setTimeout(() => {
-        setToastVisible(false);
-        if (toastOnClose) {
-          toastOnClose();
-          toastOnClose = null;
-        }
-      }, duration);
-    }, 0);
-  }
-  // --------------------------
+  const [enviando, setEnviando] = createSignal(false);
+  const { toastVisible, toastMsg, toastTipo, showToast, handleClose } = useToastContextual();
 
   createEffect(() => {
     if (modoEdicion() && fechaEdicion()) {
@@ -69,16 +50,23 @@ export default function LayoutPublic(props: RouteSectionProps) {
   });
 
   async function handleConfirmarEdicion(formData: any) {
+    setEnviando(true);
+    showToast("Guardando cambios...", "loading");
     if (tiempoRestante() === 0) {
       showToast("El tiempo de edición expiró.", "error");
       return;
     }
+
     if (!pedidoEditandoId() || !carritoId()) {
       showToast("No hay pedido o carrito activo.", "error");
       return;
     }
 
-    const payload = { carritoId: carritoId(), ...formData };
+    const payload = {
+      carritoId: carritoId(),
+      ...formData,
+    };
+
     try {
       await confirmarEdicionPedido(pedidoEditandoId()!, payload);
       showToast(
@@ -92,6 +80,7 @@ export default function LayoutPublic(props: RouteSectionProps) {
       }, 7000);
     } catch {
       showToast("Error guardando los cambios.", "error", 4000);
+      setEnviando(false);
     }
   }
 
@@ -99,25 +88,19 @@ export default function LayoutPublic(props: RouteSectionProps) {
     <div class="flex flex-col min-h-screen">
       <Header onCart={abrirCarrito} />
 
-      <ToastContextual
-        visible={toastVisible()}
-        mensaje={toastMsg()}
-        tipo={toastTipo()}
-        onClose={() => {
-          setToastVisible(false);
-          if (toastOnClose) {
-            toastOnClose();
-            toastOnClose = null;
-          }
-        }}
-      />
-
       <CarritoDesplegable
         abierto={mostrarCarrito()}
         onClose={cerrarCarrito}
         modoEdicion={modoEdicion()}
         tiempoRestante={modoEdicion() ? tiempoRestante() : undefined}
         onConfirmarEdicion={modoEdicion() ? handleConfirmarEdicion : undefined}
+      />
+
+      <ToastContextual
+        visible={toastVisible()}
+        mensaje={toastMsg()}
+        tipo={toastTipo()}
+        onClose={handleClose}
       />
 
       <main class="flex-1">{props.children}</main>

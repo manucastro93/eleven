@@ -115,7 +115,7 @@ export function initModels(sequelize: Sequelize) {
   Pedido.belongsTo(Cliente, { as: "cliente", foreignKey: "clienteId" });
   Pedido.belongsTo(EstadoPedido, {as: "estado",foreignKey: "estadoPedidoId",});
   Pedido.belongsToMany(Producto, {as: "productos",through: PedidoProducto,foreignKey: "pedidoId",otherKey: "productoId",});
-  Pedido.hasOne(Cliente, { as: "carritoEdicion", foreignKey: "pedidoId" });
+  Pedido.hasOne(Carrito, { as: "carritoEdicion", foreignKey: "pedidoId" });
 
   Producto.belongsToMany(Pedido, {as: "pedidos",through: PedidoProducto,foreignKey: "productoId",otherKey: "pedidoId",});
   Producto.hasMany(PedidoProducto, {as: "pedidoProductos",foreignKey: "productoId",});
