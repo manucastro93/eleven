@@ -26,3 +26,13 @@ frontend_public/node_modules/
 backend/.env*
 frontend_admin/.env*
 frontend_public/.env*
+# Python
+venv/
+**/__pycache__/
+*.pyc
+
+# Playwright (binarios y caches)
+**/playwright/driver/
+**/playwright/.cache/
+**/playwright-report/
+**/test-results/
