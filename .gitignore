@@ -36,3 +36,4 @@ venv/
 **/playwright/.cache/
 **/playwright-report/
 **/test-results/
+backend/uploads/
