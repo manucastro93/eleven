@@ -391,7 +391,7 @@ export async function confirmarCarrito(
     localidad,
     provincia,
     codigoPostal,
-    categoriaFiscal = "RESPONSABLE_INSCRIPTO",
+    categoriaFiscal = "",
     estadoPedidoId = 1,
   } = datos;
 
